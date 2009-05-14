@@ -1,0 +1,752 @@
+/*
+ * Canola2 Youtube Plugin
+ * Copyright (C) 2008 Instituto Nokia de Tecnologia
+ * Author: Adriano Rezende <adriano.rezende@openbossa.org>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7
+ *
+ * If you modify this Program, or any covered work, by linking or combining it
+ * with Canola2 and its core components (or a modified version of any of those),
+ * containing parts covered by the terms of Instituto Nokia de Tecnologia End
+ * User Software Agreement, the licensors of this Program grant you additional
+ * permission to convey the resulting work.
+ */
+
+#define STATE_ADD_VISIBLE()                                 \
+    description {                                           \
+        state: "visible" 0.0;                               \
+        inherit: "default" 0.0;                             \
+        color: 255 255 255 255;                             \
+        visible: 1;                                         \
+    }                                                       \
+
+#define STATE_ADD_HIDDEN()                                  \
+    description {                                           \
+        state: "hidden" 0.0;                                \
+        inherit: "default" 0.0;                             \
+        color: 255 255 255 0;                               \
+        visible: 0;                                         \
+    }                                                       \
+
+#define PROGRAM_ADD_HIDE(p_name)                                        \
+   program {                                                            \
+      name: p_name",hide";                                              \
+      signal: p_name",hide";                                            \
+      action: STATE_SET "hidden" 0.0;                                   \
+      target: p_name;                                                   \
+   }                                                                    \
+
+#define PROGRAM_ADD_SHOW(p_name)                                        \
+   program {                                                            \
+      name: p_name",show";                                              \
+      signal: p_name",show";                                            \
+      action: STATE_SET "visible" 0.0;                                  \
+      target: p_name;                                                   \
+   }
+
+
+   group {
+      name: "list_item_picasa";
+
+      min: 1 100;
+      max: 9999 100;
+      parts {
+         part {
+            name: "clipper";
+            type: RECT;
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  relative: 0.0 0.0;
+                  offset: 0 0;
+               }
+               rel2 {
+                  relative: 1.0 1.0;
+                  offset: -1 -1;
+               }
+            }
+            description {
+               state: "hidden" 0.0;
+               inherit: "default" 0.0;
+               color: 255 255 255 0;
+               visible: 0;
+            }
+         }
+
+         part {
+            name: "selection_clipper";
+            type: RECT;
+            clip_to: "clipper";
+            description {
+               state: "default" 0.0;
+               color: 255 255 255 0;
+               visible: 0;
+               rel1 {
+                  relative: 0.0 0.0;
+                  offset: 0 0;
+               }
+               rel2 {
+                  relative: 1.0 1.0;
+                  offset: -1 -2;
+               }
+            }
+            description {
+               state: "visible" 0.0;
+               inherit: "default" 0.0;
+               color: 255 255 255 255;
+               visible: 1;
+            }
+         }
+
+         part {
+            name: "selection";
+            type: SWALLOW;
+            clip_to: "selection_clipper";
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  relative: 0.0 0.0;
+                  offset: 0 0;
+               }
+               rel2 {
+                  relative: 1.0 1.0;
+                  offset: -1 -2;
+               }
+            }
+         }
+
+         part {
+            name: "shadow";
+            type: IMAGE;
+            clip_to: "clipper";
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               min: 120 10;
+               max: 120 10;
+               rel1 {
+                  relative: 0.0 1.0;
+                  offset: 10 -5;
+               }
+               rel2 {
+                  relative: 0.0 1.0;
+                  offset: 159 4;
+               }
+               image.normal: "images/shadow_album_art_small.png";
+            }
+         }
+
+         part {
+            name: "separator";
+            type: IMAGE;
+            clip_to: "clipper";
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               min: 100 1;
+               max: 9999 1;
+               rel1 {
+                  relative: 0.0 1.0;
+                  offset: 0 -1;
+               }
+               rel2 {
+                  relative: 1.0 1.0;
+                  offset: -1 -1;
+               }
+               image {
+                  normal: "images/sep_list_text.png";
+                  border: 50 50 0 0;
+               }
+            }
+            description {
+               state: "last" 0.0;
+               inherit: "default" 0.0;
+               visible: 0;
+            }
+         }
+
+         programs {
+            program {
+               name: "state,default";
+               signal: "state,default";
+               action: STATE_SET "default" 0.0;
+               target: "separator";
+            }
+            program {
+               name: "state,last";
+               signal: "state,last";
+               action: STATE_SET "last" 0.0;
+               target: "separator";
+            }
+
+            program {
+               name: "clip,state,hidden";
+               signal: "clip,state,hidden";
+               action: STATE_SET "hidden" 0.0;
+               target: "clipper";
+            }
+            program {
+               name: "clip,state,default";
+               signal: "clip,state,default";
+               action: STATE_SET "default" 0.0;
+               target: "clipper";
+            }
+
+            program {
+               name: "selection,show";
+               signal: "selection,show";
+               action: STATE_SET "visible" 0.0;
+               transition: DECELERATE (TIMEOUT_HIDE / 3);
+               target: "selection_clipper";
+            }
+            program {
+               name: "selection,hide";
+               signal: "selection,hide";
+               action: STATE_SET "default" 0.0;
+               transition: DECELERATE (TIMEOUT_HIDE / 3);
+               target: "selection_clipper";
+            }
+         }
+
+         part {
+            name: "no-thumb";
+            type: IMAGE;
+            mouse_events: 0;
+            clip_to: "clipper";
+            description {
+               state: "default" 0.0;
+               visible: 0;
+               min: 120 90;
+               max: 120 90;
+               rel1 {
+                  relative: 0.0 0.0;
+                  offset: 10 5;
+               }
+               rel2 {
+                  relative: 0.0 1.0;
+                  offset: 159 -6;
+               }
+               image.normal: "images/no_thumb_video.png";
+            }
+            description {
+               state: "alternate" 0.0;
+               inherit: "default" 0.0;
+               visible: 1;
+            }
+         }
+
+         part {
+            name: "contents";
+            type: SWALLOW;
+            mouse_events: 0;
+            clip_to: "clipper";
+            description {
+               state: "default" 0.0;
+               min: 120 90;
+               max: 120 90;
+               rel1 {
+                  relative: 0.0 0.0;
+                  offset: 10 5;
+               }
+               rel2 {
+                  relative: 0.0 1.0;
+                  offset: 159 -6;
+               }
+            }
+            description {
+               state: "alternate" 0.0;
+               inherit: "default" 0.0;
+               visible: 0;
+            }
+         }
+
+         programs {
+            program {
+               name: "thumb,show";
+               signal: "thumb,show";
+               action: STATE_SET "default" 0.0;
+               target: "no-thumb";
+               target: "contents";
+            }
+            program {
+               name: "thumb,hide";
+               signal: "thumb,hide";
+               action: STATE_SET "alternate" 0.0;
+               target: "no-thumb";
+               target: "contents";
+            }
+         }
+
+         part {
+            name: "text";
+            type: TEXT;
+            clip_to: "clipper";
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  relative: 1.0 0.0;
+                  offset: 20 20;
+                  to_x: "contents";
+               }
+               rel2 {
+                  relative: 0.0 0.0;
+                  offset: -16 20;
+                  to_x: "delete_button";
+               }
+               color: 255 255 255 255;
+               text {
+                  font: "Nokia Sans:style=Bold";
+                  size: 30;
+                  text: "Title";
+                  align: 0.0 0.5;
+               }
+            }
+         }
+
+         part {
+            name: "from";
+            type: TEXT;
+            clip_to: "clipper";
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  relative: 1.0 0.0;
+                  offset: 20 50;
+                  to_x: "contents";
+               }
+               rel2 {
+                  relative: 0.0 0.0;
+                  offset: -16 50;
+                  to_x: "delete_button";
+               }
+               color: 255 255 255 255;
+               text {
+                  font: "Nokia Sans";
+                  size: 20;
+                  text: "From: someone";
+                  align: 0.0 0.5;
+               }
+            }
+         }
+
+         part {
+            name: "rating_area";
+            type: SWALLOW;
+            clip_to: "clipper";
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               min: 132 16;
+               max: 132 16;
+               rel1 {
+                  relative: 1.0 0.0;
+                  offset: 10 77;
+                  to_x: "contents";
+               }
+               rel2 {
+                  relative: 1.0 0.0;
+                  offset: 155 77;
+                  to_x: "contents";
+               }
+            }
+         }
+
+         part {
+            name: "delete_button";
+            type: SWALLOW;
+            clip_to: "clipper";
+            description {
+               state: "default" 0.0;
+               align: 1.0 0.5;
+               rel1 {
+                  relative: 1.0 0.0;
+                  offset: -67 -2;
+               }
+               rel2 {
+                  relative: 1.0 1.0;
+                  offset: -1 -1;
+               }
+            }
+            STATE_ADD_HIDDEN();
+            STATE_ADD_VISIBLE();
+         }
+         PROGRAM_ADD_HIDE("delete_button");
+         PROGRAM_ADD_SHOW("delete_button");
+
+         part {
+            name: "duration";
+            type: TEXT;
+            clip_to: "clipper";
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  relative: 1.0 0.0;
+                  offset: 0 77;
+                  to_x: "rating_area";
+               }
+               rel2 {
+                  relative: 0.0 0.0;
+                  offset: -40 77;
+                  to_x: "views";
+               }
+               color: 255 255 255 225;
+               text {
+                  font: "Nokia Sans";
+                  size: 20;
+                  text: "05:40";
+                  align: 0.0 0.5;
+               }
+            }
+         }
+
+         part {
+            name: "views";
+            type: TEXT;
+            clip_to: "clipper";
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  relative: 1.0 0.0;
+                  offset: 158 77;
+                  to_x: "rating_area";
+               }
+               rel2 {
+                  relative: 0.0 0.0;
+                  offset: -16 77;
+                  to_x: "delete_button";
+               }
+               color: 255 255 255 225;
+               text {
+                  font: "Nokia Sans";
+                  size: 20;
+                  text: "Views: 1,938";
+                  align: 0.0 0.5;
+               }
+            }
+         }
+      }
+   }
+
+   group {
+      name: "list_item_picasa_resizeable";
+
+      parts {
+         part {
+            name: "normal";
+            type: RECT;
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               color: 0 0 0 0;
+               rel1 {
+                  relative: 0.0 0.0;
+                  offset: 0 0;
+               }
+               rel2 {
+                  relative: 1.0 1.0;
+                  offset: -1 -1;
+               }
+            }
+         }
+
+         part {
+            name: "area";
+            type: RECT;
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  relative: 0.0 0.0;
+                  offset: 0 0;
+               }
+               rel2 {
+                  relative: 1.0 1.0;
+                  offset: -1 -1;
+               }
+            }
+            description {
+               state: "grow" 0.0;
+               color: 255 255 255 0;
+               visible: 0;
+               rel1 {
+                  relative: 0.0 0.0;
+                  offset: -20 -10;
+               }
+               rel2 {
+                  relative: 1.0 1.0;
+                  offset: 19 9;
+               }
+            }
+         }
+
+         part {
+            name: "selection";
+            type: SWALLOW;
+            clip_to: "area";
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  to: "area";
+                  relative: 0.0 0.0;
+                  offset: 0 0;
+               }
+               rel2 {
+                  to: "area";
+                  relative: 1.0 1.0;
+                  offset: -1 -1;
+               }
+            }
+         }
+
+         part {
+            name: "no-thumb";
+            type: IMAGE;
+            mouse_events: 0;
+            clip_to: "area";
+            description {
+               state: "default" 0.0;
+               visible: 0;
+               align: 0.0 0.5;
+               aspect: 1.33338 1;
+               aspect_preference: BOTH;
+               rel1 {
+                  relative: 0.0 0.0;
+                  offset: 25 5;
+                  to: "area";
+               }
+               rel2 {
+                  relative: 0.3 1.0;
+                  offset: 25 -6;
+                  to: "area";
+               }
+               image.normal: "images/no_thumb_video.png";
+            }
+            description {
+               state: "alternate" 0.0;
+               inherit: "default" 0.0;
+               visible: 1;
+            }
+         }
+
+         part {
+            name: "contents";
+            type: SWALLOW;
+            mouse_events: 0;
+            clip_to: "area";
+            description {
+               state: "default" 0.0;
+               align: 0.0 0.5;
+               aspect: 1.33338 1;
+               aspect_preference: BOTH;
+               rel1 {
+                  relative: 0.0 0.0;
+                  offset: 25 5;
+                  to: "area";
+               }
+               rel2 {
+                  relative: 0.3 1.0;
+                  offset: 25 -6;
+                  to: "area";
+               }
+            }
+            description {
+               state: "alternate" 0.0;
+               inherit: "default" 0.0;
+               visible: 0;
+            }
+         }
+
+         programs {
+            program {
+               name: "thumb,show";
+               signal: "thumb,show";
+               action: STATE_SET "default" 0.0;
+               target: "no-thumb";
+               target: "contents";
+            }
+            program {
+               name: "thumb,hide";
+               signal: "thumb,hide";
+               action: STATE_SET "alternate" 0.0;
+               target: "no-thumb";
+               target: "contents";
+            }
+         }
+
+         part {
+            name: "text";
+            type: TEXT;
+            clip_to: "area";
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  relative: 1.0 0.0;
+                  offset: 20 20;
+                  to_y: "normal";
+                  to_x: "no-thumb";
+               }
+               rel2 {
+                  relative: 1.0 0.0;
+                  offset: -16 20;
+                  to: "normal";
+               }
+               color: 255 255 255 255;
+               text {
+                  font: "Nokia Sans:style=Bold";
+                  size: 30;
+                  text: "Title";
+                  align: 0.0 0.5;
+               }
+            }
+         }
+
+         part {
+            name: "from";
+            type: TEXT;
+            clip_to: "area";
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  relative: 1.0 0.0;
+                  offset: 20 50;
+                  to_y: "normal";
+                  to_x: "no-thumb";
+               }
+               rel2 {
+                  relative: 1.0 0.0;
+                  offset: -16 50;
+                  to: "normal";
+               }
+               color: 255 255 255 255;
+               text {
+                  font: "Nokia Sans";
+                  size: 20;
+                  text: "From: someone";
+                  align: 0.0 0.5;
+               }
+            }
+         }
+
+         part {
+            name: "rating_area";
+            type: SWALLOW;
+            clip_to: "area";
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               min: 132 16;
+               max: 132 16;
+               rel1 {
+                  relative: 1.0 0.0;
+                  offset: 10 77;
+                  to_y: "normal";
+                  to_x: "no-thumb";
+               }
+               rel2 {
+                  relative: 1.0 0.0;
+                  offset: 155 77;
+                  to_y: "normal";
+                  to_x: "no-thumb";
+               }
+            }
+         }
+
+
+         part {
+            name: "duration";
+            type: TEXT;
+            clip_to: "area";
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  relative: 1.0 0.0;
+                  offset: 55 77;
+                  to_y: "normal";
+                  to_x: "rating_area";
+               }
+               rel2 {
+                  relative: 1.0 0.0;
+                  offset: -16 77;
+                  to: "normal";
+               }
+               color: 255 255 255 225;
+               text {
+                  font: "Nokia Sans";
+                  size: 20;
+                  text: "05:40";
+                  align: 0.0 0.5;
+               }
+            }
+         }
+
+
+         part {
+            name: "views";
+            type: TEXT;
+            clip_to: "area";
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  relative: 1.0 0.0;
+                  offset: 158 77;
+                  to_y: "normal";
+                  to_x: "rating_area";
+               }
+               rel2 {
+                  relative: 1.0 0.0;
+                  offset: -16 77;
+                  to: "normal";
+               }
+               color: 255 255 255 225;
+               text {
+                  font: "Nokia Sans";
+                  size: 20;
+                  text: "Views: 1,938";
+                  align: 0.0 0.5;
+               }
+            }
+         }
+
+         programs {
+            program {
+               name: "animate";
+               signal: "animate";
+               action: STATE_SET "default" 0.0;
+               target: "area";
+               after: "animate_p2";
+            }
+            program {
+               name: "animate_p2";
+               action: STATE_SET "grow" 0.0;
+               transition: ACCELERATE (TIMEOUT_HIDE);
+               target: "area";
+               after: "animate,finished";
+            }
+            program {
+               name: "animate,finished";
+               action: SIGNAL_EMIT "animate,finished" "";
+            }
+         }
+      }
+   }

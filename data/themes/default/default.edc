@@ -1,0 +1,11 @@
+
+#define TIMEOUT_HIDE 0.4
+#define TIMEOUT_HOLD 0.5
+
+#define FONT_COLOR 255 255 255 255
+
+#include "images.edc"
+
+collections {
+   #include "default_picasa.edc"
+}

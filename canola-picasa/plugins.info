@@ -1,0 +1,22 @@
+[Picasa Model]
+modname = canola-picasa.model
+enabled = True
+rank = 256
+filter_map = Icon/Folder - Icon
+             Model/Folder/Task/Image/Picasa - MainModelFolder
+             Model/Settings/Folder/InternetMedia/Picasa - OptionsModel
+
+[Picasa Controller]
+modname = canola-picasa.controller
+enabled = True
+rank = 256
+filter_map = Controller/Folder/Task/Image/Picasa/Service - ServiceController
+             Controller/Folder/Task/Image/Picasa - PicasaController
+
+
+[Picasa Options]
+modname = canola-picasa.options
+enabled = True
+rank = 256
+filter_map = Controller/Settings/Folder/InternetMedia/Picasa - OptionsController
+             Controller/Settings/Folder/InternetMedia/Picasa/UserPass - UserPassController

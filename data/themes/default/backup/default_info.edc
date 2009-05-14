@@ -1,0 +1,312 @@
+/*
+ * Canola2 Youtube Plugin
+ * Copyright (C) 2008 Instituto Nokia de Tecnologia
+ * Author: Adriano Rezende <adriano.rezende@openbossa.org>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7
+ *
+ * If you modify this Program, or any covered work, by linking or combining it
+ * with Canola2 and its core components (or a modified version of any of those),
+ * containing parts covered by the terms of Instituto Nokia de Tecnologia End
+ * User Software Agreement, the licensors of this Program grant you additional
+ * permission to convey the resulting work.
+ */
+
+   group {
+      name: "panel_info_picasa";
+
+      styles {
+         style {
+            name: "title_style";
+            base: "font=Nokia\\ Sans:style=Bold font_size=19 color=#626262 \
+                   valign=top wrap=word";
+            tag: "br" "  \n";
+         }
+
+         style {
+            name: "author_style";
+            base: "font=Nokia\\ Sans:style=Bold font_size=16 color=#7F7F7F \
+                   valign=baseline";
+            tag: "br" "  \n";
+         }
+      }
+
+      parts {
+         part {
+            name: "clipper";
+            type: RECT;
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  relative: 0.0 0.0;
+                  offset: 0 0;
+               }
+               rel2 {
+                  relative: 1.0 1.0;
+                  offset: -1 -1;
+               }
+            }
+            description {
+               state: "hidden" 0.0;
+               inherit: "default" 0.0;
+               color: 255 255 255 0;
+               visible: 0;
+            }
+         }
+
+         part {
+            name: "background";
+            type: RECT;
+            clip_to: "clipper";
+            description {
+               state: "default" 0.0;
+               color: 244 244 244 255;
+               rel1 {
+                  relative: 0.0 0.0;
+                  offset: 0 0;
+               }
+               rel2 {
+                  relative: 1.0 1.0;
+                  offset: -1 -1;
+               }
+            }
+         }
+
+         part {
+            name: "no-thumb";
+            type: IMAGE;
+            mouse_events: 0;
+            clip_to: "clipper";
+            description {
+               state: "default" 0.0;
+               visible: 1;
+               min: 120 90;
+               max: 120 90;
+               rel1 {
+                  relative: 0.0 0.0;
+                  offset: 0 70;
+               }
+               rel2 {
+                  relative: 0.0 0.0;
+                  offset: 119 70;
+               }
+               image.normal: "images/no_thumb_video_dark.png";
+            }
+            description {
+               state: "alternate" 0.0;
+               inherit: "default" 0.0;
+               visible: 1;
+            }
+         }
+
+         part {
+            name: "contents";
+            type: SWALLOW;
+            mouse_events: 0;
+            clip_to: "clipper";
+            description {
+               state: "default" 0.0;
+               min: 120 90;
+               max: 120 90;
+               rel1 {
+                  relative: 0.0 0.0;
+                  offset: 0 70;
+               }
+               rel2 {
+                  relative: 0.0 0.0;
+                  offset: 119 70;
+               }
+            }
+            description {
+               state: "alternate" 0.0;
+               inherit: "default" 0.0;
+               visible: 0;
+            }
+         }
+
+         programs {
+            program {
+               name: "thumb,show";
+               signal: "thumb,show";
+               action: STATE_SET "default" 0.0;
+               target: "no-thumb";
+               target: "contents";
+            }
+            program {
+               name: "thumb,hide";
+               signal: "thumb,hide";
+               action: STATE_SET "alternate" 0.0;
+               target: "no-thumb";
+               target: "contents";
+            }
+         }
+
+         part {
+            name: "title";
+            type: TEXTBLOCK;
+            clip_to: "clipper";
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               color: 50 50 50 255;
+               max: 400 47;
+               rel1 {
+                  to_x: "no-thumb";
+                  to_y: "no-thumb";
+                  relative: 1.0 0.0;
+                  offset: 10 -3;
+               }
+               rel2 {
+                  to_x: "background";
+                  to_y: "no-thumb";
+                  relative: 1.0 0.0;
+                  offset: -1 46;
+               }
+               text {
+                  text: "TITLE title title2 title title3 title title title4 title title title title title TITLE ";
+                  style: "title_style";
+                  min: 0 1;
+               }
+            }
+         }
+
+         part {
+            name: "author";
+            type: TEXTBLOCK;
+            clip_to: "clipper";
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               color: 50 50 50 255;
+               rel1 {
+                  to_x: "no-thumb";
+                  to_y: "title";
+                  relative: 1.0 1.0;
+                  offset: 10 5;
+               }
+               rel2 {
+                  to: "background";
+                  to_y: "title";
+                  relative: 1.0 1.0;
+                  offset: -1 30;
+               }
+               text {
+                  text: "From: asdasd...";
+                  style: "author_style";
+                  min: 0 1;
+               }
+            }
+         }
+
+         part {
+            name: "rating_area";
+            type: SWALLOW;
+            clip_to: "clipper";
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  to_x: "no-thumb";
+                  to_y: "author";
+                  relative: 1.0 1.0;
+                  offset: 2 -6;
+               }
+               rel2 {
+                  to: "no-thumb";
+                  to_y: "author";
+                  relative: 1.0 1.0;
+                  offset: 140 19;
+               }
+            }
+         }
+
+         part {
+            name: "divisor";
+            type: RECT;
+            clip_to: "clipper";
+            description {
+               state: "default" 0.0;
+               color: 180 180 180 255;
+               min: 9999 1;
+               rel1 {
+                  to_y: "no-thumb";
+                  relative: 0.0 1.0;
+                  offset: 10 20;
+               }
+               rel2 {
+                  to_y: "no-thumb";
+                  relative: 1.0 1.0;
+                  offset: -11 20;
+               }
+            }
+         }
+
+         part {
+            name: "description";
+            type: SWALLOW;
+            clip_to: "clipper";
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  to_x: "background";
+                  to_y: "divisor";
+                  relative: 0.0 1.0;
+                  offset: 0 10;
+               }
+               rel2 {
+                  to_x: "background";
+                  relative: 1.0 1.0;
+                  offset: -1 -21;
+               }
+            }
+         }
+
+
+      }
+   }
+
+   group {
+      name: "textblock_description";
+      min: 390 0;
+      max: 390 9999;
+
+      styles {
+         style {
+            name: "textblock_description_style";
+            base: "font=Nokia\\ Sans:style=Bold font_size=19 color=#626262 \
+                   valign=baseline wrap=word";
+            tag: "br" "\n";
+         }
+      }
+
+      parts {
+         part {
+            name: "text";
+            type: TEXTBLOCK;
+            description {
+               state: "default" 0.0;
+               min: 390 0;
+               color: 50 50 50 255;
+               align: 0 0;
+               text {
+                  text: "...";
+                  style: "textblock_description_style";
+                  min: 0 1;
+               }
+            }
+         }
+      }
+   }

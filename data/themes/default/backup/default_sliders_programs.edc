@@ -1,0 +1,166 @@
+/*
+ * Canola2 Youtube Plugin
+ * Copyright (C) 2008 Instituto Nokia de Tecnologia
+ * Author: Adriano Rezende <adriano.rezende@openbossa.org>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7
+ *
+ * If you modify this Program, or any covered work, by linking or combining it
+ * with Canola2 and its core components (or a modified version of any of those),
+ * containing parts covered by the terms of Instituto Nokia de Tecnologia End
+ * User Software Agreement, the licensors of this Program grant you additional
+ * permission to convey the resulting work.
+ */
+
+#define RECALC_FROM_MOUSE()                                             \
+   script {                                                             \
+      public is_mouse_down = 0;                                         \
+      public enabled = 1;                                               \
+                                                                        \
+      public recalc_from_mouse(pos, part_name, knob) {                  \
+         new mx, my, ox, oy, ow, oh, res;                               \
+         new Float:p;                                                   \
+                                                                        \
+         get_mouse(mx, my);                                             \
+         get_geometry(part_name, ox, oy, ow, oh);                       \
+                                                                        \
+         if (pos == 0) {                                                \
+            res = mx - ox;                                              \
+            if (res > 0) {                                              \
+               p = Float:res / Float:ow;                                \
+               set_drag(knob, p, 0.0);                                  \
+            }                                                           \
+            else                                                        \
+               set_drag(knob, 0.0, 0.0);                                \
+         }                                                              \
+         else {                                                         \
+            res = my - oy;                                              \
+            if (res > 0) {                                              \
+               p = Float:res / Float:oh;                                \
+               set_drag(knob, 0.0, p);                                  \
+            }                                                           \
+            else                                                        \
+               set_drag(knob, 0.0, 0.0);                                \
+         }                                                              \
+      }                                                                 \
+                                                                        \
+      public send_drag_signal(signal_name[], knob) {                    \
+         new Float:dx;                                                  \
+         new Float:dy;                                                  \
+         new buff[256];                                                 \
+         get_drag(knob, dx, dy);                                        \
+         snprintf(buff, 256, "%f:%f", dx, dy);                          \
+         emit(signal_name, buff);                                       \
+      }                                                                 \
+   }                                                                    \
+
+#define SLIDER_PROGRAMS(part_name, knob, pos)                           \
+   RECALC_FROM_MOUSE();                                                 \
+                                                                        \
+   part {                                                               \
+      name: part_name"_area";                                           \
+      type: RECT;                                                       \
+      mouse_events: 1;                                                  \
+      description {                                                     \
+         state: "default" 0.0;                                          \
+         color: 255 0 0 0;                                              \
+         rel1.to: part_name;                                            \
+         rel2.to: part_name;                                            \
+      }                                                                 \
+   }                                                                    \
+                                                                        \
+   programs {                                                           \
+      program {                                                         \
+         name: part_name"_show";                                        \
+         signal: "show";                                                \
+         source: "*";                                                   \
+         script {                                                       \
+            set_int(is_mouse_down, 0);                                  \
+            set_int(enabled, 1);                                        \
+         }                                                              \
+      }                                                                 \
+                                                                        \
+      program {                                                         \
+         name: part_name"_clicked";                                     \
+         signal: "mouse,clicked,1";                                     \
+         source: part_name"_area";                                      \
+         script {                                                       \
+            if (get_int(enabled) == 1)                                  \
+               recalc_from_mouse(pos, PART:part_name"_area", PART:knob); \
+         }                                                              \
+      }                                                                 \
+                                                                        \
+      program {                                                         \
+         name: part_name"_down";                                        \
+         signal: "mouse,down,1";                                        \
+         source: part_name"_area";                                      \
+         script {                                                       \
+            if (get_int(enabled) == 1)                                  \
+               set_int(is_mouse_down, 1);                               \
+         }                                                              \
+      }                                                                 \
+                                                                        \
+      program {                                                         \
+         name: part_name"_up";                                          \
+         signal: "mouse,up,1";                                          \
+         source: part_name"_area";                                      \
+         script {                                                       \
+            if (get_int(enabled) == 1) {                                \
+               set_int(is_mouse_down, 0);                               \
+               recalc_from_mouse(pos, PART:part_name"_area", PART:knob); \
+               send_drag_signal(part_name",drag_set", PART:knob);       \
+            }                                                           \
+         }                                                              \
+      }                                                                 \
+                                                                        \
+      program {                                                         \
+         name: part_name"_move";                                        \
+         signal: "mouse,move";                                          \
+         source: part_name"_area";                                      \
+         script {                                                       \
+            if (get_int(enabled) == 1 && get_int(is_mouse_down) == 1)   \
+               recalc_from_mouse(pos, PART:part_name"_area", PART:knob); \
+         }                                                              \
+      }                                                                 \
+                                                                        \
+      program {                                                         \
+         name: knob"_drag_stop";                                        \
+         signal: "drag,stop";                                           \
+         source: "knob";                                                \
+         script {                                                       \
+            if (get_int(enabled) == 1)                                  \
+               send_drag_signal(part_name",drag_set", PART:knob);       \
+         }                                                              \
+      }                                                                 \
+                                                                        \
+      program {                                                         \
+         name: knob"_disable";                                          \
+         signal: "drag,disable";                                        \
+         source: part_name;                                             \
+         script {                                                       \
+            set_int(enabled, 0);                                        \
+         }                                                              \
+      }                                                                 \
+                                                                        \
+      program {                                                         \
+         name: knob"_enable";                                           \
+         signal: "drag,enable";                                         \
+         source: part_name;                                             \
+         script {                                                       \
+            set_int(enabled, 1);                                        \
+         }                                                              \
+      }                                                                 \
+   }

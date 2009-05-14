@@ -1,0 +1,8 @@
+Picasa plugin for Canola
+GSoC Project
+Student: Mirestean Andrei < andrei.mirestean at gmail.com >
+Mentor: Gustavo Chaves
+
+Project summary
+
+The aim of this project is to develop a Picasa plugin for Canola. The plugin will be able to access the web albums stored at Picasa, to upload new pictures, to add/update descriptions and tags). The plugin will ease and shorten the process of taking and sharing a picture on the Internet. It will also use GPS data to fill location information in picture's meta-data and to search for pictures taken in current region. 

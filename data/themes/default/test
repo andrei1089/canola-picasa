@@ -1,0 +1,21 @@
+#!/usr/bin/env python
+
+import evas
+import ecore
+import ecore.evas
+import edje
+#import edje.decorators
+import sys
+import os
+
+ee = ecore.evas.SoftwareX11(w=800, h=200)
+
+edje_file = "default.edj"
+
+c = edje.Edje(ee.evas,file=edje_file,group="list_item_picasa")
+c.size = ee.evas.size
+
+c.show()
+ee.show()
+ecore.main_loop_begin();
+
