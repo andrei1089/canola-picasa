@@ -13,8 +13,9 @@ manager = Manager()
 picasa_manager = PicasaManager()
 
 PluginDefaultIcon = manager.get_class("Icon/Plugin")
-
 Photos  = manager.get_class("Model/Folder/Image/All")
+OptionsActionModel = manager.get_class("Model/Options/Action")
+OptionsModelFolder = manager.get_class("Model/Options/Folder")
 
 log = logging.getLogger("plugins.canola-picasa.model")
 
@@ -22,6 +23,20 @@ class Icon(PluginDefaultIcon):
     terra_type = "Icon/Folder"
     icon = "icon/main_item/photos_local"
     plugin = "canola-picasa"
+
+class PicasaTestOptionModel(OptionsActionModel):
+    terra_type = "Model/Options/Action/Pictures/Picasa/Opt1"
+    name = "option 1"
+
+    def execute(self):
+        print "option clicked"
+        return True
+
+class PicasaOptionsModel(OptionsModelFolder):
+ 	terra_type = "Model/Options/Folder/Pictures/Picasa"
+ 	title = "Picasa Options"
+ 	children_prefixes = ["Model/Options/Action/Pictures/Picasa"]
+
 
 
 class MainModelFolder(ModelFolder, Task):
@@ -42,6 +57,9 @@ class MainModelFolder(ModelFolder, Task):
         if self.login_successful == False:
             return 
         AlbumModelFolder("List albums", self)
+
+    def options_model_get(self, controller):
+        return PicasaOptionsModel( None, controller )
 
 
 class xyzModel(ModelFolder):
@@ -127,7 +145,7 @@ class AlbumModelFolder(ServiceModelFolder):
         return self.parse_entry_list(self.albums)
 
 ###########################################
-#Options Model
+#Settings Model
 ###########################################
 
 class OptionsModel(ModelFolder):

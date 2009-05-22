@@ -16,7 +16,7 @@ ResizableRowRenderer = manager.get_class("Widget/ResizableRowRenderer")
 OptionsControllerMixin = manager.get_class("OptionsControllerMixin")
 WaitNotifyModel = manager.get_class("Model/WaitNotify")
 NotifyModel = manager.get_class("Model/Notify")
-
+OptionsControllerMixin = manager.get_class("OptionsControllerMixin")
 
 log = logging.getLogger("plugins.canola-picasa.controller")
 
@@ -179,7 +179,8 @@ class ServiceController(BaseListController, OptionsControllerMixin):
         """Popup a modal with a notify message."""
         self.parent.show_notify(err)
 
-class PicasaController(BaseListController, Controller):
+class PicasaController(BaseListController, OptionsControllerMixin):
+
     terra_type = "Controller/Folder/Task/Image/Picasa"
 
     def __init__(self, model, canvas, parent):
@@ -197,7 +198,7 @@ class PicasaController(BaseListController, Controller):
                 self.parent.show_notify(dialog)
 
         
-        Controller.__init__(self, model, canvas, parent)
+        BaseListController.__init__(self, model, canvas, parent)
         self.animating = False
         
         self.waitDialog = WaitNotifyModel("Connecting to Picasa,<br> please wait...", 1000);
@@ -210,4 +211,8 @@ class PicasaController(BaseListController, Controller):
         self.model.changed_callback_add(self._update_ui)
         self.model.callback_state_changed = self._model_state_changed
         self._check_model_loaded()
+        OptionsControllerMixin.__init__(self)
 
+
+    def options_model_get(self):
+        return self.model.options_model_get(self)
