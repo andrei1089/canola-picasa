@@ -13,7 +13,6 @@ manager = Manager()
 picasa_manager = PicasaManager()
 
 PluginDefaultIcon = manager.get_class("Icon/Plugin")
-Photos  = manager.get_class("Model/Folder/Image/All")
 OptionsActionModel = manager.get_class("Model/Options/Action")
 OptionsModelFolder = manager.get_class("Model/Options/Folder")
 

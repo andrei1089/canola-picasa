@@ -86,7 +86,7 @@ class PicasaManager:
                 break
         if album is None:
             return False
-        else
+        else:
             return self.gd_client.Delete(album)
 
 
