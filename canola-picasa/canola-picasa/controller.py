@@ -179,7 +179,11 @@ class ServiceController(BaseListController, OptionsControllerMixin):
         """Popup a modal with a notify message."""
         self.parent.show_notify(err)
 
-class PicasaController(BaseListController, OptionsControllerMixin):
+    def options_model_get(self):
+        return self.model.options_model_get(self)
+
+
+class PicasaController(BaseListController):
 
     terra_type = "Controller/Folder/Task/Image/Picasa"
 
@@ -211,8 +215,6 @@ class PicasaController(BaseListController, OptionsControllerMixin):
         self.model.changed_callback_add(self._update_ui)
         self.model.callback_state_changed = self._model_state_changed
         self._check_model_loaded()
-        OptionsControllerMixin.__init__(self)
 
 
-    def options_model_get(self):
-        return self.model.options_model_get(self)
+

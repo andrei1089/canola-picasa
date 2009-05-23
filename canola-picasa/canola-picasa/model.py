@@ -24,20 +24,6 @@ class Icon(PluginDefaultIcon):
     icon = "icon/main_item/photos_local"
     plugin = "canola-picasa"
 
-class PicasaTestOptionModel(OptionsActionModel):
-    terra_type = "Model/Options/Action/Pictures/Picasa/Opt1"
-    name = "option 1"
-
-    def execute(self):
-        print "option clicked"
-        return True
-
-class PicasaOptionsModel(OptionsModelFolder):
- 	terra_type = "Model/Options/Folder/Pictures/Picasa"
- 	title = "Picasa Options"
- 	children_prefixes = ["Model/Options/Action/Pictures/Picasa"]
-
-
 
 class MainModelFolder(ModelFolder, Task):
     terra_type = "Model/Folder/Task/Image/Picasa"
@@ -57,9 +43,6 @@ class MainModelFolder(ModelFolder, Task):
         if self.login_successful == False:
             return 
         AlbumModelFolder("List albums", self)
-
-    def options_model_get(self, controller):
-        return PicasaOptionsModel( None, controller )
 
 
 class xyzModel(ModelFolder):
@@ -143,6 +126,10 @@ class AlbumModelFolder(ServiceModelFolder):
         self.albums = picasa_manager.get_user_albums()
         return self.parse_entry_list(self.albums)
 
+    def options_model_get(self, controller):
+        return PicasaAlbumOptionModel( None, controller )
+
+
 ###########################################
 #Settings Model
 ###########################################
@@ -184,3 +171,41 @@ class UserPassOptionsModel(MixedListItemDual):
     def on_right_button_clicked(self):
         self.callback_use(self)
 
+
+###########################################
+#Options Model
+###########################################
+
+class PicasaAddAlbumOptionModel(MixedListItemDual):
+    terra_type = "Model/Options/Folder/Pictures/Picasa/Album/AddAlbum"
+    title = "New Album"
+
+    def __init__(self, parent=None):
+        MixedListItemDual.__init__(self, parent)
+
+    def get_title(self):
+        return "User/Password" 
+
+    def get_left_button_text(self):
+        return "Test login"
+
+    def get_right_button_text(self):
+        return "Change"
+
+    def on_clicked(self):
+        self.callback_use(self)
+
+    def on_left_button_clicked(self):
+        self.callback_use(self)
+
+    def on_right_button_clicked(self):
+        self.callback_use(self)
+
+
+class PicasaAlbumOptionModel(OptionsModelFolder):
+    terra_type = "Model/Options/Folder/Pictures/Picasa"
+    title = "Picasa Options"
+#    children_prefixes = ["Model/Options/Folder/Pictures/Picasa/Album"]
+
+    def do_load(self):
+        PicasaAddAlbumOptionModel(self)
