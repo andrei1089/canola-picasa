@@ -2,6 +2,7 @@ import gdata.photos.service
 import gdata.media
 import gdata.geo
 import gdata.service
+import os
 
 
 class PicasaManager:
@@ -23,12 +24,24 @@ class PicasaManager:
             print "running outside canola"
             self.outside_terra = True;
 
+
     def reload_prefs(self):
         self.setUser( self.get_preference("username", ""))
         self.setPassword ( self.get_preference("password", "") )
 
     def get_preference(self, name, default=None):
         return self.prefs.get(name, default)
+
+    def get_thumbs_path(self):
+        try:
+            path = self.prefs["thumbs_path"]
+        except KeyError:
+            path = os.path.join( os.path.expanduser("~"), ".canola", "picasa", "thumbs")
+            self.prefs["thumbs_path"] = path
+            self.prefs.save()
+        if not os.path.exists(path):
+            os.makedirs(path)
+        return path
 
     def set_preference(self, name, value):
         self.prefs[name] = value

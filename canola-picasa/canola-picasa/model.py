@@ -7,6 +7,7 @@ from manager import PicasaManager
 from terra.core.task import Task
 from terra.core.manager import Manager
 from terra.core.model import Model, ModelFolder
+from terra.core.threaded_func import ThreadedFunction
 
 
 manager = Manager()
@@ -115,11 +116,10 @@ class ServiceModelFolder(ModelFolder):
     def _create_model_from_entry(self, album ):
         
         log.debug("creating model for album_id  %s" % album.gphoto_id.text)
-        #TODO: get thumb_location from plugin prefs
 
         model = xyzModel("album model", self)
         model.album_id = album.gphoto_id.text
-        model.thumb_local = "/home/andrei/.canola/picasa/thumbs/%s.jpg" % model.album_id
+        model.thumb_local = os.path.join( picasa_manager.get_thumbs_path(), model.album_id + ".jpg")
         model.thumb_url = album.media.thumbnail[0].url
         model.date = album.updated.text[:10]
         model.name = album.title.text
