@@ -1,3 +1,19 @@
+#Canola2 Picasa plugin
+#Author: Mirestean Andrei < andrei.mirestean at gmail.com >
+#
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#
+#You should have received a copy of the GNU General Public License
+#along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import gdata.photos.service
 import gdata.media
 import gdata.geo
@@ -13,7 +29,7 @@ class PicasaManager:
         self.gd_client.source = 'Picasa plugin for Canola'
         self.logged = False
         self.login_error = ''
-        self.user = '' 
+        self.user = ''
         self.password = ''
         self.albums =''
         self.outside_terra = False;
@@ -68,17 +84,17 @@ class PicasaManager:
             self.reload_prefs()
         try:
             self.gd_client.ProgrammaticLogin()
-            self.logged = True 
-        except gdata.service.BadAuthentication, X: 
+            self.logged = True
+        except gdata.service.BadAuthentication, X:
             self.login_error = X.message
-            self.logged = False 
-        except: 
+            self.logged = False
+        except:
             self.logged = False
             self.login_error = "unknown error"
 
     def is_logged(self):
         return self.logged
-	
+
     def get_user_albums(self):
         if not self.albums:
             self.refresh_user_albums(self.user)

@@ -1,3 +1,19 @@
+#Canola2 Picasa plugin
+#Author: Mirestean Andrei < andrei.mirestean at gmail.com >
+#
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#
+#You should have received a copy of the GNU General Public License
+#along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import evas
 import ecore
 import locale
@@ -28,7 +44,7 @@ class ActionButton(PluginThemeMixin, GeneralActionButton):
 class GeneralRowRenderer(PluginThemeMixin, BaseRowRenderer):
     """
     This renderer is applied on ServiceController. Providing
-    a personalized list item for albums. It shows the following album 
+    a personalized list item for albums. It shows the following album
     properties: title, thumb, number of pictures, data it was created.
 
     @note: This renderer extends BaseRowRenderer, overloading
@@ -188,10 +204,10 @@ class PicasaController(BaseListController):
     terra_type = "Controller/Folder/Task/Image/Picasa"
 
     def __init__(self, model, canvas, parent):
-        
+
         def th_function(self):
-            self.model.load() 
-        
+            self.model.load()
+
 
         def th_finished(exception, retval):
             self.waitDialog.stop()
@@ -201,10 +217,10 @@ class PicasaController(BaseListController):
                         self.model.login_error, answer_callback=None)
                 self.parent.show_notify(dialog)
 
-        
+
         BaseListController.__init__(self, model, canvas, parent)
         self.animating = False
-        
+
         self.waitDialog = WaitNotifyModel("Connecting to Picasa,<br> please wait...", 1000);
         self.parent.show_notify(self.waitDialog);
 

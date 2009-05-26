@@ -1,3 +1,19 @@
+#Canola2 Picasa plugin
+#Author: Mirestean Andrei < andrei.mirestean at gmail.com >
+#
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#
+#You should have received a copy of the GNU General Public License
+#along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import os
 import edje
 import logging
@@ -20,7 +36,7 @@ OptionsModelFolder = manager.get_class("Model/Options/Folder")
 log = logging.getLogger("plugins.canola-picasa.model")
 
 class Icon(PluginDefaultIcon):
-    terra_type = "Icon/Folder"
+    terra_type = "Icon/Folder/Task/Image/Picasa"
     icon = "icon/main_item/photos_local"
     plugin = "canola-picasa"
 
@@ -34,20 +50,20 @@ class MainModelFolder(ModelFolder, Task):
         ModelFolder.__init__(self, "Picasa plugin", parent)
 
     def do_load(self):
-        picasa_manager.login() 
+        picasa_manager.login()
         #print "picasa user = " + str(picasa_manager.getUser())
         #print "picasa password = " + str(picasa_manager.getPassword())
         self.login_successful = picasa_manager.is_logged()
         self.login_error = picasa_manager.get_login_error()
 
         if self.login_successful == False:
-            return 
+            return
         AlbumModelFolder("List albums", self)
 
 
 class xyzModel(ModelFolder):
     terra_type = "Model/Folder/Task/Image/Picasa/Album"
-    
+
     def __init__(self, name, parent):
         ModelFolder.__init__(self, name, parent)
 
@@ -80,7 +96,7 @@ class ServiceModelFolder(ModelFolder):
     def search(self, end_callback=None):
         del self.children[:]
         x = self.do_search()
-        #???        
+        #???
         #for c in x:
         #    self.children.append(c)
 
@@ -88,16 +104,16 @@ class ServiceModelFolder(ModelFolder):
         raise NotImplementedError("must be implemented by subclasses")
 
     def parse_entry_list(self, albums):
-        lst = [] 
+        lst = []
 
         for i in albums.entry:
             model = self._create_model_from_entry(i);
             lst.append(model)
 
         return lst
-    
+
     def _create_model_from_entry(self, album ):
-        
+
         log.debug("creating model for album_id  %s" % album.gphoto_id.text)
 
         model = xyzModel("album model", self)
@@ -120,8 +136,8 @@ class AlbumModelFolder(ServiceModelFolder):
 
     def __init__(self, name,parent):
         ServiceModelFolder.__init__(self, name, parent)
-        
-      
+
+
     def do_search(self):
         self.albums = picasa_manager.get_user_albums()
         return self.parse_entry_list(self.albums)
@@ -154,7 +170,7 @@ class UserPassOptionsModel(MixedListItemDual):
         MixedListItemDual.__init__(self, parent)
 
     def get_title(self):
-        return "User/Password" 
+        return "User/Password"
 
     def get_left_button_text(self):
         return "Test login"
@@ -177,14 +193,14 @@ class UserPassOptionsModel(MixedListItemDual):
 ###########################################
 
 class PicasaAddAlbumOptionModel(MixedListItemDual):
-    terra_type = "Model/Options/Folder/Pictures/Picasa/Album/AddAlbum"
+    terra_type = "Model/Options/Folder/Image/Picasa/Album/AddAlbum"
     title = "New Album"
 
     def __init__(self, parent=None):
         MixedListItemDual.__init__(self, parent)
 
     def get_title(self):
-        return "User/Password" 
+        return "User/Password"
 
     def get_left_button_text(self):
         return "Test login"
@@ -203,7 +219,7 @@ class PicasaAddAlbumOptionModel(MixedListItemDual):
 
 
 class PicasaAlbumOptionModel(OptionsModelFolder):
-    terra_type = "Model/Options/Folder/Pictures/Picasa"
+    terra_type = "Model/Options/Folder/Image/Picasa"
     title = "Picasa Options"
 #    children_prefixes = ["Model/Options/Folder/Pictures/Picasa/Album"]
 

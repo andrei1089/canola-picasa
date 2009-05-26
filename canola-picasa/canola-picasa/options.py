@@ -1,10 +1,26 @@
+#Canola2 Picasa plugin
+#Author: Mirestean Andrei < andrei.mirestean at gmail.com >
+#
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#
+#You should have received a copy of the GNU General Public License
+#along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import ecore
 import logging
 
 from terra.core.manager import Manager
 from terra.core.threaded_func import ThreadedFunction
 
-from manager import PicasaManager 
+from manager import PicasaManager
 
 manager = Manager()
 picasa_manager = PicasaManager()
@@ -29,8 +45,8 @@ class UserPassController(ModalController):
     terra_type = "Controller/Settings/Folder/InternetMedia/Picasa/UserPass"
 
     def __init__(self, model, canvas, parent):
-        ModalController.__init__(self, model, canvas, parent)
 
+        ModalController.__init__(self, model, canvas, parent)
         self.parent_controller = parent
         self.model = model
         self.view = UsernamePasswordModal(parent, "Login to Picasa",
@@ -62,7 +78,7 @@ class UserPassController(ModalController):
         MixedListItemDual.__init__(self, parent)
 
     def get_title(self):
-        return "User/Password" 
+        return "User/Password"
 
     def get_left_button_text(self):
         return "Test login"
@@ -147,7 +163,7 @@ class PicasaAddAlbumOptionController(ModalController):
         MixedListItemDual.__init__(self, parent)
 
     def get_title(self):
-        return "User/Password" 
+        return "User/Password"
 
     def get_left_button_text(self):
         return "Test login"
