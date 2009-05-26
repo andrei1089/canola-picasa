@@ -51,8 +51,6 @@ class MainModelFolder(ModelFolder, Task):
 
     def do_load(self):
         picasa_manager.login()
-        #print "picasa user = " + str(picasa_manager.getUser())
-        #print "picasa password = " + str(picasa_manager.getPassword())
         self.login_successful = picasa_manager.is_logged()
         self.login_error = picasa_manager.get_login_error()
 
@@ -80,6 +78,11 @@ class xyzModel(ModelFolder):
                 end_callback()
         else:
             ThreadedFunction(request_finished, request).start()
+
+    def delete_model(self):
+        action = picasa_manager.delete_album(self.album_id)
+        log.debug("deleting album with id: %s, operation result: %s" % (self.album_id, action) )
+
 
 class ServiceModelFolder(ModelFolder):
     terra_type = "Model/Folder/Task/Image/Picasa/Service"

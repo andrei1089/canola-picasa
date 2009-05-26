@@ -110,8 +110,10 @@ class GeneralRowRenderer(PluginThemeMixin, BaseRowRenderer):
         def cb_collapsed(*ignored):
             self.delete_button.signal_callback_del("contents_box,collapsed", "",
                                                    cb_collapsed)
-            self._model.parent.delete_model(self._model.id)
+            #TODO: ? Delete_model in thread ?
+            self._model.delete_model()
             self._model.parent.children.remove(self._model)
+
             self.delete_button.signal_emit("unblock,events", "")
             self.delete_button.state_set(ActionButton.STATE_TRASH)
 

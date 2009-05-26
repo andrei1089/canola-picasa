@@ -109,14 +109,18 @@ class PicasaManager:
     def delete_album(self, id):
         albums = self.get_user_albums()
         album = None
-        for i in albums:
+        ret = None
+        for i in albums.entry:
             if i.gphoto_id.text == id:
                 album = i
                 break
         if album is None:
-            return False
+            ret = False
         else:
-            return self.gd_client.Delete(album)
+             ret = self.gd_client.Delete(album)
+        self.refresh_user_albums(self.user)
+
+        return ret
 
 
     def get_photos_from_album(self, album):
