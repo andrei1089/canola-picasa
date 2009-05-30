@@ -74,27 +74,6 @@ class UserPassController(ModalController):
 
         picasa_manager.setUser(self.view.username)
         picasa_manager.setPassword(self.view.password)
-    def __init__(self, parent=None):
-        MixedListItemDual.__init__(self, parent)
-
-    def get_title(self):
-        return "User/Password"
-
-    def get_left_button_text(self):
-        return "Test login"
-
-    def get_right_button_text(self):
-        return "Change"
-
-    def on_clicked(self):
-        self.callback_use(self)
-
-    def on_left_button_clicked(self):
-        self.callback_use(self)
-
-    def on_right_button_clicked(self):
-        self.callback_use(self)
-
         def refresh(session):
             session.login()
 
@@ -127,7 +106,7 @@ class UserPassController(ModalController):
 
 
 class PicasaAddAlbumOptionController(ModalController):
-    terra_type = "Controller/Options/Folder/Pictures/Picasa/Album/AddAlbum"
+    terra_type = "Controller/Options/Folder/Image/Picasa/Album/AddAlbum"
 
     def __init__(self, model, canvas, parent):
         ModalController.__init__(self, model, canvas, parent)
