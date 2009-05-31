@@ -13,7 +13,7 @@
 #
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import etk
 import ecore
 import logging
 
@@ -28,7 +28,7 @@ picasa_manager = PicasaManager()
 network = manager.get_status_notifier("Network")
 
 ModalController = manager.get_class("Controller/Modal")
-UsernamePasswordModal = manager.get_class("Widget/Settings/UsernamePasswordModal")
+PanelContentModal = manager.get_class("Widget/Settings/PanelContentModal")
 MixedListController = manager.get_class("Controller/Settings/Folder/MixedList")
 
 log = logging.getLogger("plugins.canola-picasa.options")
@@ -49,6 +49,9 @@ class UserPassController(ModalController):
         ModalController.__init__(self, model, canvas, parent)
         self.parent_controller = parent
         self.model = model
+        print "!!!!parent = " + str(parent)
+        print "!!!dir parent = " + str(dir(parent))
+        print "!!parent.parent = " + str(parent.parent)
         self.view = UsernamePasswordModal(parent, "Login to Picasa",
                                           parent.view.theme,
                                           vborder=50)
@@ -104,22 +107,72 @@ class UserPassController(ModalController):
 #Options
 ###########################################################
 
+class NewAlbumModal(PanelContentModal):
+    terra_type = "Widget/Settings/NewAlbumModal"
+
+    def __init__(self, parent, title,
+                 theme=None, hborder=16, vborder=50):
+        PanelContentModal.__init__(self, parent, title, theme,
+                                   hborder=hborder, vborder=vborder)
+
+        label_name = etk.Label("Name:")
+        label_name.alignment_set(0.0, 1.0)
+        label_name.show()
+
+        label_description = etk.Label("Description:")
+        label_description.alignment_set(0.0, 1.0)
+        label_description.show()
+
+        self.entry_name = etk.Entry(text="")
+        self.entry_name.on_text_activated(self._on_ok_clicked)
+        self.entry_name.show()
+
+        self.entry_description = etk.Entry(text="")
+        self.entry_description.on_text_activated(self._on_ok_clicked)
+        self.entry_description.show()
+
+        vbox = etk.VBox()
+        vbox.border_width_set(5)
+        vbox.append(label_name, etk.VBox.START, etk.VBox.FILL, 5)
+        vbox.append(self.entry_name, etk.VBox.START, etk.VBox.FILL, 10)
+
+        vbox.append(label_description, etk.VBox.START, etk.VBox.FILL, 5)
+        vbox.append(self.entry_description, etk.VBox.START, etk.VBox.FILL, 10)
+        vbox.show()
+
+        self.set_content(vbox)
+
+    def get_name(self):
+        return self.entry_name.text
+
+    def set_name(self, text):
+        self.entry_name.text = text
+
+    name = property(get_name, set_name)
+
+    def get_description(self):
+        return self.entry_description.text
+
+    def set_description(self, text):
+        self.entry_description.text = text
+
+    description = property(get_description, set_description)
+
+    def _on_ok_clicked(self, *ignored):
+        if self.callback_ok_clicked:
+            self.callback_ok_clicked()
+
 
 class PicasaAddAlbumOptionController(ModalController):
     terra_type = "Controller/Options/Folder/Image/Picasa/Album/AddAlbum"
-
     def __init__(self, model, canvas, parent):
+
         ModalController.__init__(self, model, canvas, parent)
 
         self.parent_controller = parent
         self.model = model
-        self.view = UsernamePasswordModal(parent, "Login to Picasa",
-                                          parent.view.theme,
-                                          vborder=50)
 
-        picasa_manager.reload_prefs()
-        self.view.username = picasa_manager.getUser()
-        self.view.password = picasa_manager.getPassword()
+        self.view = NewAlbumModal(parent.last_panel, "Add new album")
 
         self.view.callback_ok_clicked = self._on_ok_clicked
         self.view.callback_cancel_clicked = self.close
@@ -128,56 +181,20 @@ class PicasaAddAlbumOptionController(ModalController):
 
     def close(self):
         def cb(*ignored):
-            self.parent_controller.view.list.redraw_queue()
+            #self.parent_controller.view.list.redraw_queue()
             self.back()
         self.view.hide(end_callback=cb)
 
     def _on_ok_clicked(self):
-        if not self.view.username or not self.view.password:
-            return
+        def cb_close(*ignored):
+            self.close()
 
-        picasa_manager.setUser(self.view.username)
-        picasa_manager.setPassword(self.view.password)
-    def __init__(self, parent=None):
-        MixedListItemDual.__init__(self, parent)
+        print "ok clicked"
 
-    def get_title(self):
-        return "User/Password"
+        if not self.view.name:
+            self.view.message_wait("Missing name")
+            ecore.timer_add(2, cb_close)
 
-    def get_left_button_text(self):
-        return "Test login"
-
-    def get_right_button_text(self):
-        return "Change"
-
-    def on_clicked(self):
-        self.callback_use(self)
-
-    def on_left_button_clicked(self):
-        self.callback_use(self)
-
-    def on_right_button_clicked(self):
-        self.callback_use(self)
-
-        def refresh(session):
-            session.login()
-
-        def refresh_finished(exception, retval):
-            def cb_close(*ignored):
-                self.close()
-                self.parent.killall()
-
-            if picasa_manager.is_logged():
-                self.model.title = "Logged as %s" % picasa_manager.getUser()
-                self.view.message("Login successful")
-                ecore.timer_add(1.5, cb_close)
-
-            else:
-                self.view.message("Login error: %s" % picasa_manager.get_login_error() )
-                ecore.timer_add(1.5, cb_close)
-
-        self.view.message_wait("Trying to login...")
-        ThreadedFunction(refresh_finished, refresh, picasa_manager).start()
 
     def delete(self):
         self.view.delete()

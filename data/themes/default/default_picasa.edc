@@ -291,7 +291,7 @@
          }
 
          part {
-            name: "text";
+            name: "album_title";
             type: TEXT;
             clip_to: "clipper";
             mouse_events: 0;

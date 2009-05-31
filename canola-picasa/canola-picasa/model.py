@@ -220,11 +220,17 @@ class PicasaAddAlbumOptionModel(MixedListItemDual):
     def on_right_button_clicked(self):
         self.callback_use(self)
 
+class PicasaTestOptionModel(OptionsActionModel):
+
+    name = "Test option"
+
+    def execute(self):
+        print "option clicked"
 
 class PicasaAlbumOptionModel(OptionsModelFolder):
     terra_type = "Model/Options/Folder/Image/Picasa"
     title = "Picasa Options"
-#    children_prefixes = ["Model/Options/Folder/Pictures/Picasa/Album"]
 
     def do_load(self):
+        PicasaTestOptionModel(self)
         PicasaAddAlbumOptionModel(self)
