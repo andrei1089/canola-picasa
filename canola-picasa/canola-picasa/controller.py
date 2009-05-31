@@ -138,6 +138,7 @@ class GeneralRowRenderer(PluginThemeMixin, BaseRowRenderer):
         self.part_text_set("album_date", "Date:" + model.prop["date"])
         self.part_text_set("album_description", model.prop["description"])
         self.part_text_set("album_cnt_photos", "Photos: "+ model.prop["cntPhotos"] )
+        self.part_text_set("album_access", model.prop["access"].capitalize() )
         #TODO: do not modify thumb's l/h ratio
         model.request_thumbnail(self.cb_load_thumbnail)
 

@@ -380,14 +380,40 @@
                }
                rel2 {
                   relative: 0.0 0.0;
-                  offset: -40 77;
+                  offset: -10 77;
                   to_x: "album_cnt_photos";
                }
                color: 255 255 255 225;
                text {
                   font: "Nokia Sans";
                   size: 20;
-                  text: "05:40";
+                  text: "Date: 2009-04-30";
+                  align: 0.0 0.5;
+               }
+            }
+         }
+	part {
+            name: "album_access";
+            type: TEXT;
+            clip_to: "clipper";
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  relative: 1.0 0.0;
+                  offset: 400 77;
+                  to_x: "no-thumb";
+               }
+               rel2 {
+                  relative: 0.0 0.0;
+                  offset: -16 77;
+                  to_x: "delete_button";
+               }
+               color: 255 255 255 225;
+               text {
+                  font: "Nokia Sans";
+                  size: 20;
+                  text: "public";
                   align: 0.0 0.5;
                }
             }
@@ -402,7 +428,7 @@
                state: "default" 0.0;
                rel1 {
                   relative: 1.0 0.0;
-                  offset: 300 77;
+                  offset: 235 77;
                   to_x: "no-thumb";
                }
                rel2 {
@@ -414,7 +440,7 @@
                text {
                   font: "Nokia Sans";
                   size: 20;
-                  text: "Views: 1,938";
+                  text: "Photos: 1,938";
                   align: 0.0 0.5;
                }
             }
@@ -646,12 +672,38 @@
                text {
                   font: "Nokia Sans";
                   size: 20;
-                  text: "05:40";
+                  text: "Date: 2009-05-30";
                   align: 0.0 0.5;
                }
             }
          }
-
+         part {
+            name: "album_access";
+            type: TEXT;
+            clip_to: "area";
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  relative: 1.0 0.0;
+                  offset: 10 90;
+                  to_y: "normal";
+                  to_x: "no-thumb";
+               }
+               rel2 {
+                  relative: 1.0 0.0;
+                  offset: -16 90;
+                  to: "normal";
+               }
+               color: 255 255 255 225;
+               text {
+                  font: "Nokia Sans";
+                  size: 20;
+                  text: "access";
+                  align: 0.0 0.5;
+               }
+            }
+         }
 
          part {
             name: "album_cnt_photos";
@@ -662,7 +714,7 @@
                state: "default" 0.0;
                rel1 {
                   relative: 1.0 0.0;
-                  offset: 158 77;
+                  offset: 130 77;
                   to_y: "normal";
                   to_x: "no-thumb";
                }
@@ -675,7 +727,7 @@
                text {
                   font: "Nokia Sans";
                   size: 20;
-                  text: "Views: 1,938";
+                  text: "Photos: 25";
                   align: 0.0 0.5;
                }
             }

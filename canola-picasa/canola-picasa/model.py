@@ -117,6 +117,7 @@ class ServiceModelFolder(ModelFolder):
         prop["thumb_local"]= os.path.join( picasa_manager.get_thumbs_path(), prop["album_id"] + ".jpg")
         prop["thumb_url"] = album.media.thumbnail[0].url
         prop["date"] = album.updated.text[:10]
+        prop["access"] = album.access.text
         if  album.summary.text != None  :
             prop["description"] = album.summary.text
         else:
