@@ -143,6 +143,10 @@ class AlbumModelFolder(ServiceModelFolder):
 
     def create_album(self, name, desc):
         album = picasa_manager.create_album(name, desc)
+
+        #TODO: find a better way for this
+        picasa_manager.refresh_user_albums( picasa_manager.getUser() )
+
         if album is not None:
             self._create_model_from_entry(album)
             return True

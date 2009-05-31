@@ -178,8 +178,8 @@ class PicasaAddAlbumOptionController(ModalController):
 
     def close(self):
         def cb(*ignored):
-            #self.parent_controller.view.list.redraw_queue()
             self.back()
+            self.parent.back()
         self.view.hide(end_callback=cb)
 
     def _on_ok_clicked(self):
@@ -191,13 +191,13 @@ class PicasaAddAlbumOptionController(ModalController):
             ecore.timer_add(2, cb_close)
             return
 
+
         AlbumModelFolder = self.parent.screen_controller.model
         status = AlbumModelFolder.create_album(self.view.name, self.view.description)
         if not status:
             self.view.message_wait("Failed to add new album")
             ecore.timer_add(2, cb_close)
             return
-
         self.close();
 
 
