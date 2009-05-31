@@ -49,9 +49,6 @@ class UserPassController(ModalController):
         ModalController.__init__(self, model, canvas, parent)
         self.parent_controller = parent
         self.model = model
-        print "!!!!parent = " + str(parent)
-        print "!!!dir parent = " + str(dir(parent))
-        print "!!parent.parent = " + str(parent.parent)
         self.view = UsernamePasswordModal(parent, "Login to Picasa",
                                           parent.view.theme,
                                           vborder=50)
@@ -189,11 +186,19 @@ class PicasaAddAlbumOptionController(ModalController):
         def cb_close(*ignored):
             self.close()
 
-        print "ok clicked"
-
         if not self.view.name:
             self.view.message_wait("Missing name")
             ecore.timer_add(2, cb_close)
+            return
+
+        AlbumModelFolder = self.parent.screen_controller.model
+        status = AlbumModelFolder.create_album(self.view.name, self.view.description)
+        if not status:
+            self.view.message_wait("Failed to add new album")
+            ecore.timer_add(2, cb_close)
+            return
+
+        self.close();
 
 
     def delete(self):

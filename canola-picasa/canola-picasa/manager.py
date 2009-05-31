@@ -104,7 +104,11 @@ class PicasaManager:
         self.albums = self.gd_client.GetUserFeed(user=user)
 
     def create_album(self, title, description):
-        return self.gd_client.InsertAlbum(title, description)
+        try:
+            return self.gd_client.InsertAlbum(title, description)
+        except:
+            return None
+
 
     def delete_album(self, id):
         albums = self.get_user_albums()

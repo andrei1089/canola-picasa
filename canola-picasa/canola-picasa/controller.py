@@ -122,10 +122,10 @@ class GeneralRowRenderer(PluginThemeMixin, BaseRowRenderer):
 
     def cb_load_thumbnail(self):
         try:
-            self.image.file_set(self._model.thumb_local)
+            self.image.file_set(self._model.prop["thumb_local"])
             self.signal_emit("thumb,show", "")
         except Exception, e:
-            log.error("could not load image %r: %s", self._model.thumb_local, e)
+            log.error("could not load image %r: %s", self._model.prop["thumb_local"], e)
             self.signal_emit("thumb,hide", "")
 
     def value_set(self, model):
@@ -134,10 +134,10 @@ class GeneralRowRenderer(PluginThemeMixin, BaseRowRenderer):
             return
 
         self._model = model
-        self.part_text_set("album_title", model.name)
-        self.part_text_set("album_date", "Date:" + model.date)
-        self.part_text_set("album_description", model.description)
-        self.part_text_set("album_cnt_photos", "Photos: "+ model.cntPhotos )
+        self.part_text_set("album_title", model.prop["album_title"])
+        self.part_text_set("album_date", "Date:" + model.prop["date"])
+        self.part_text_set("album_description", model.prop["description"])
+        self.part_text_set("album_cnt_photos", "Photos: "+ model.prop["cntPhotos"] )
         #TODO: do not modify thumb's l/h ratio
         model.request_thumbnail(self.cb_load_thumbnail)
 

@@ -61,27 +61,28 @@ class MainModelFolder(ModelFolder, Task):
 
 class xyzModel(ModelFolder):
     terra_type = "Model/Folder/Task/Image/Picasa/Album"
+    def __init__(self, name, parent, prop):
+        self.prop = prop
 
-    def __init__(self, name, parent):
         ModelFolder.__init__(self, name, parent)
 
     def request_thumbnail(self, end_callback=None):
         def request(*ignored):
-            urllib.urlretrieve(self.thumb_url, self.thumb_local)
+            urllib.urlretrieve(self.prop["thumb_url"], self.prop["thumb_local"])
 
         def request_finished(exception, retval):
             if end_callback:
                 end_callback()
 
-        if not self.thumb_url or os.path.exists(self.thumb_local):
+        if not self.prop["thumb_url"] or os.path.exists(self.prop["thumb_local"]):
             if end_callback:
                 end_callback()
         else:
             ThreadedFunction(request_finished, request).start()
 
     def delete_model(self):
-        action = picasa_manager.delete_album(self.album_id)
-        log.debug("deleting album with id: %s, operation result: %s" % (self.album_id, action) )
+        action = picasa_manager.delete_album(self.prop["album_id"])
+        log.debug("deleting album with id: %s, operation result: %s" % (self.prop["album_id"], action) )
 
 
 class ServiceModelFolder(ModelFolder):
@@ -98,44 +99,36 @@ class ServiceModelFolder(ModelFolder):
 
     def search(self, end_callback=None):
         del self.children[:]
-        x = self.do_search()
-        #???
-        #for c in x:
-        #    self.children.append(c)
+        self.do_search()
 
     def do_search(self):
         raise NotImplementedError("must be implemented by subclasses")
 
     def parse_entry_list(self, albums):
-        lst = []
-
         for i in albums.entry:
-            model = self._create_model_from_entry(i);
-            lst.append(model)
-
-        return lst
+            self._create_model_from_entry(i)
 
     def _create_model_from_entry(self, album ):
 
         log.debug("creating model for album_id  %s" % album.gphoto_id.text)
-
-        model = xyzModel("album model", self)
-        model.album_id = album.gphoto_id.text
-        model.thumb_local = os.path.join( picasa_manager.get_thumbs_path(), model.album_id + ".jpg")
-        model.thumb_url = album.media.thumbnail[0].url
-        model.date = album.updated.text[:10]
-        model.name = album.title.text
+        prop = {}
+        prop["album_title"] = album.title.text
+        prop["album_id"] = album.gphoto_id.text
+        prop["thumb_local"]= os.path.join( picasa_manager.get_thumbs_path(), prop["album_id"] + ".jpg")
+        prop["thumb_url"] = album.media.thumbnail[0].url
+        prop["date"] = album.updated.text[:10]
         if  album.summary.text != None  :
-            model.description = album.summary.text
+            prop["description"] = album.summary.text
         else:
-            model.description = "Missing description"
+            prop["description"] = "Missing description"
 
-        model.cntPhotos = album.numphotos.text
+        prop["cntPhotos"] = album.numphotos.text
 
+        model = xyzModel("album model", self, prop)
         return model
 
 class AlbumModelFolder(ServiceModelFolder):
-    terra_type = "Model/Folder/Task/Image/Picasa/Service/AlbumModel"
+    terra_typef = "Model/Folder/Task/Image/Picasa/Service/AlbumModel"
 
     def __init__(self, name,parent):
         ServiceModelFolder.__init__(self, name, parent)
@@ -143,10 +136,17 @@ class AlbumModelFolder(ServiceModelFolder):
 
     def do_search(self):
         self.albums = picasa_manager.get_user_albums()
-        return self.parse_entry_list(self.albums)
+        self.parse_entry_list(self.albums)
 
     def options_model_get(self, controller):
         return PicasaAlbumOptionModel( None, controller )
+
+    def create_album(self, name, desc):
+        album = picasa_manager.create_album(name, desc)
+        if album is not None:
+            self._create_model_from_entry(album)
+            return True
+        return False
 
 
 ###########################################
@@ -201,6 +201,7 @@ class PicasaAddAlbumOptionModel(MixedListItemDual):
 
     def __init__(self, parent=None):
         MixedListItemDual.__init__(self, parent)
+        self.manager = picasa_manager
 
     def get_title(self):
         return "User/Password"
