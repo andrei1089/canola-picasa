@@ -235,5 +235,8 @@ class PicasaController(BaseListController):
         self.model.callback_state_changed = self._model_state_changed
         self._check_model_loaded()
 
+IController = manager.get_class("Controller/Folder")
 
+class AlbumController(IController):
+    terra_type = "Controller/Folder/Image/Picasa/Album"
 

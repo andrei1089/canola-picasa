@@ -127,8 +127,10 @@ class PicasaManager:
         return ret
 
 
-    def get_photos_from_album(self, album):
-        return self.gd_client.GetFeed('/data/feed/api/user/%s/albumid/%s?kind=photo' % (album.user.text, album.gphoto_id.text) )
+    def get_photos_from_album(self, album_id, user = None) :
+        if not user:
+            user = self.getUser()
+        return self.gd_client.GetFeed('/data/feed/api/user/%s/albumid/%s?kind=photo' % (user , album_id) )
 
     def get_login_error(self):
         return self.login_error
@@ -148,8 +150,9 @@ class PicasaManager:
 #x= p.get_user_albums()
 #z=[]
 #for i in x.entry:
-#	print i.title.text
-#	z.append(i.gphoto_id.text)
+#    print i.title.text
+#    z.append(i.gphoto_id.text)
+#    zz = i
 
 #y=p.get_photos_from_album(zz)
 

@@ -60,12 +60,19 @@ class MainModelFolder(ModelFolder, Task):
             return
         AlbumModelFolder("List albums", self)
 
+class ImageModel(ModelFolder):
+    terra_type = "Model/Folder/Image/Picasa/Album/Image"
 
-class xyzModel(ModelFolder):
-    terra_type = "Model/Folder/Task/Image/Picasa/Album"
+    def __init__(self, name, parent, image):
+        self.image = image
+        ModelFolder.__init__(self, name, parent)
+
+
+class AlbumModel(ModelFolder):
+    terra_type = "Model/Folder/Image/Picasa/Album"
+
     def __init__(self, name, parent, prop):
         self.prop = prop
-
         ModelFolder.__init__(self, name, parent)
 
     def request_thumbnail(self, end_callback=None):
@@ -81,6 +88,11 @@ class xyzModel(ModelFolder):
                 end_callback()
         else:
             ThreadedFunction(request_finished, request).start()
+
+    def do_load(self):
+        pics = picasa_manager.get_photos_from_album(self.prop["album_id"]);
+        for pic in pics.entry:
+                ImageModel(pic.title.text, self, pic)
 
     def delete_model(self):
         action = picasa_manager.delete_album(self.prop["album_id"])
@@ -127,8 +139,7 @@ class ServiceModelFolder(ModelFolder):
 
         prop["cntPhotos"] = album.numphotos.text
 
-        model = xyzModel("album model", self, prop)
-        return model
+        AlbumModel(album.title.text, self, prop)
 
 class AlbumModelFolder(ServiceModelFolder):
     terra_typef = "Model/Folder/Task/Image/Picasa/Service/AlbumModel"
