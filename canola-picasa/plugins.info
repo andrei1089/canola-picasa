@@ -6,6 +6,7 @@ filter_map = Icon/Folder/Task/Image/Picasa - Icon
              Model/Folder/Task/Image/Picasa - MainModelFolder
              Model/Settings/Folder/InternetMedia/Picasa - OptionsModel
              Model/Options/Folder/Image/Picasa/Album/AddAlbum - PicasaAddAlbumOptionModel
+             Model/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload - FullScreenUploadOptions
 
 [Picasa Controller]
 modname = canola-picasa.controller

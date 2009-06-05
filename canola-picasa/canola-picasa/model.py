@@ -29,6 +29,8 @@ from terra.core.threaded_func import ThreadedFunction
 manager = Manager()
 picasa_manager = PicasaManager()
 
+print "!!!! picasa_manager_loaded"
+
 PluginDefaultIcon = manager.get_class("Icon/Plugin")
 OptionsActionModel = manager.get_class("Model/Options/Action")
 OptionsModelFolder = manager.get_class("Model/Options/Folder")
@@ -240,3 +242,7 @@ class PicasaAlbumOptionModel(OptionsModelFolder):
     def do_load(self):
         PicasaTestOptionModel(self)
         PicasaAddAlbumOptionModel(self)
+
+class FullScreenUploadOptions(OptionsModelFolder):
+    terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload"
+    title = "Upload to Picasa"
