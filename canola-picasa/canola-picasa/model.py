@@ -29,11 +29,10 @@ from terra.core.threaded_func import ThreadedFunction
 manager = Manager()
 picasa_manager = PicasaManager()
 
-print "!!!! picasa_manager_loaded"
-
 PluginDefaultIcon = manager.get_class("Icon/Plugin")
 OptionsActionModel = manager.get_class("Model/Options/Action")
 OptionsModelFolder = manager.get_class("Model/Options/Folder")
+CanolaError = manager.get_class("Model/Notify/Error")
 
 log = logging.getLogger("plugins.canola-picasa.model")
 
@@ -113,7 +112,28 @@ class ServiceModelFolder(ModelFolder):
 
     def search(self, end_callback=None):
         del self.children[:]
-        self.do_search()
+
+        def refresh():
+            self.do_search()
+
+        def refresh_finished(exception, retval):
+            if not self.is_loading:
+                log.info("model is not loading")
+                return
+
+            if exception is not None:
+                msg = "ERROR!"
+                log.error(exception)
+
+                if self.callback_notify:
+                    self.callback_notify(CanolaError(msg))
+
+            if end_callback:
+                end_callback()
+            self.inform_loaded()
+
+        self.is_loading = True
+        ThreadedFunction(refresh_finished, refresh).start()
 
     def do_search(self):
         raise NotImplementedError("must be implemented by subclasses")
