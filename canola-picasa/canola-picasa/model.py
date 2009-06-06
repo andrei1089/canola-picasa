@@ -100,6 +100,7 @@ class AlbumModel(ModelFolder):
 
     def __init__(self, name, parent, prop):
         self.prop = prop
+        self.callback_notify = None
         ModelFolder.__init__(self, name, parent)
 
     def request_thumbnail(self, end_callback=None):
@@ -131,10 +132,9 @@ class AlbumModel(ModelFolder):
 
                 if self.callback_notify:
                     self.callback_notify(CanolaError(msg))
-                return
-
-            for pic in retval.entry:
-                    ImageModel(pic.title.text, self, pic)
+            else:
+                for pic in retval.entry:
+                        ImageModel(pic.title.text, self, pic)
 
             self.inform_loaded()
 

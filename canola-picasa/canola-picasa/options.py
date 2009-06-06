@@ -29,6 +29,7 @@ network = manager.get_status_notifier("Network")
 
 ModalController = manager.get_class("Controller/Modal")
 PanelContentModal = manager.get_class("Widget/Settings/PanelContentModal")
+UsernamePasswordModal = manager.get_class("Widget/Settings/UsernamePasswordModal")
 MixedListController = manager.get_class("Controller/Settings/Folder/MixedList")
 
 log = logging.getLogger("plugins.canola-picasa.options")

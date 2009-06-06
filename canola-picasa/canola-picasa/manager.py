@@ -19,10 +19,11 @@ import gdata.media
 import gdata.geo
 import gdata.service
 import os
+from terra.core.singleton import Singleton
 
-
-class PicasaManager:
+class PicasaManager(Singleton):
     def __init__(self):
+        Singleton.__init__(self)
         self.gd_client = gdata.photos.service.PhotosService()
         self.gd_client.email = ''
         self.gd_client.password = ''
@@ -135,28 +136,32 @@ class PicasaManager:
     def get_login_error(self):
         return self.login_error
 
-#p=PicasaManager()
-#p.setUser('canolapicasa')
-#p.setPassword('1234abcd')
-#p.login()
-#p.is_logged()
+if __name__ == "__main__":
+    p=PicasaManager()
+    p.setUser('canolapicasa')
+    p.setPassword('1234abcd')
+    p.login()
+    print p.is_logged()
 
-#al=[]
-#p.refresh_user_albums('canolapicasa')
-#x = p.get_user_albums()
-#for i in x.entry:
-#    al.append(i)
+    g = PicasaManager()
+    print g.is_logged()
 
-#x= p.get_user_albums()
-#z=[]
-#for i in x.entry:
-#    print i.title.text
-#    z.append(i.gphoto_id.text)
-#    zz = i
+    #al=[]
+    #p.refresh_user_albums('canolapicasa')
+    #x = p.get_user_albums()
+    #for i in x.entry:
+    #    al.append(i)
 
-#y=p.get_photos_from_album(zz)
+    #x= p.get_user_albums()
+    #z=[]
+    #for i in x.entry:
+    #    print i.title.text
+    #    z.append(i.gphoto_id.text)
+    #    zz = i
 
-#for i in y.entry:
-#	zz=i;
-#a=p.get_photos_from_album(zz)
+    #y=p.get_photos_from_album(zz)
+
+    #for i in y.entry:
+    #	zz=i;
+    #a=p.get_photos_from_album(zz)
 
