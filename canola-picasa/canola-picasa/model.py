@@ -46,18 +46,46 @@ class MainModelFolder(ModelFolder, Task):
     terra_type = "Model/Folder/Task/Image/Picasa"
     terra_task_type = "Task/Folder/Task/Image/Picasa"
 
+
     def __init__(self, parent):
         Task.__init__(self)
         ModelFolder.__init__(self, "Picasa plugin", parent)
+        self.callback_notify = None
 
     def do_load(self):
-        picasa_manager.login()
-        self.login_successful = picasa_manager.is_logged()
-        self.login_error = picasa_manager.get_login_error()
+        self.threaded_load()
 
-        if self.login_successful == False:
-            return
-        AlbumModelFolder("List albums", self)
+    def threaded_load(self, end_callback=None):
+        def refresh():
+            picasa_manager.login()
+
+        def refresh_finished(exception, retval):
+            if not self.is_loading:
+                log.info("model is not loading")
+                return
+
+            #TODO:display specific error messages
+            if exception is not None or not picasa_manager.is_logged():
+                msg = "ERROR!"
+                log.error(exception)
+
+                #why is not workin here???
+                if self.callback_notify:
+                    self.callback_notify(CanolaError(msg))
+
+            self.login_successful = picasa_manager.is_logged()
+            self.login_error = picasa_manager.get_login_error()
+
+            if self.login_successful:
+                AlbumModelFolder("List albums", self)
+
+            if end_callback:
+                end_callback()
+
+            self.inform_loaded()
+
+        self.is_loading = True
+        ThreadedFunction(refresh_finished, refresh).start()
 
 class ImageModel(ModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Album/Image"

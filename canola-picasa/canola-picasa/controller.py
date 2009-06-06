@@ -202,39 +202,6 @@ class ServiceController(BaseListController, OptionsControllerMixin):
         return self.model.options_model_get(self)
 
 
-class PicasaController(BaseListController):
-
-    terra_type = "Controller/Folder/Task/Image/Picasa"
-
-    def __init__(self, model, canvas, parent):
-
-        def th_function(self):
-            self.model.load()
-
-
-        def th_finished(exception, retval):
-            self.waitDialog.stop()
-            #TODO: get Reason
-            if not self.model.login_successful:
-                dialog = NotifyModel("Failed to connect to picasa", "Failed to connect to Picasa<br>" +\
-                        self.model.login_error, answer_callback=None)
-                self.parent.show_notify(dialog)
-
-
-        BaseListController.__init__(self, model, canvas, parent)
-        self.animating = False
-
-        self.waitDialog = WaitNotifyModel("Connecting to Picasa,<br> please wait...", 1000);
-        self.parent.show_notify(self.waitDialog);
-
-        ThreadedFunction(th_finished, th_function, self).start()
-        self._setup_view()
-
-        # should be after setup UI
-        self.model.changed_callback_add(self._update_ui)
-        self.model.callback_state_changed = self._model_state_changed
-        self._check_model_loaded()
-
 IController = manager.get_class("Controller/Folder")
 
 class AlbumController(IController):

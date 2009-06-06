@@ -13,7 +13,6 @@ modname = canola-picasa.controller
 enabled = True
 rank = 256
 filter_map = Controller/Folder/Task/Image/Picasa/Service - ServiceController
-             Controller/Folder/Task/Image/Picasa - PicasaController
              Controller/Folder/Image/Picasa/Album - AlbumController
 [Picasa Options]
 modname = canola-picasa.options
