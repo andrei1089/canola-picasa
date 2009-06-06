@@ -117,9 +117,29 @@ class AlbumModel(ModelFolder):
             ThreadedFunction(request_finished, request).start()
 
     def do_load(self):
-        pics = picasa_manager.get_photos_from_album(self.prop["album_id"]);
-        for pic in pics.entry:
-                ImageModel(pic.title.text, self, pic)
+        self.threaded_load()
+
+    def threaded_load(self):
+        def refresh():
+            return picasa_manager.get_photos_from_album(self.prop["album_id"]);
+
+        def refresh_finished(exception, retval):
+            #TODO: get specific error
+            if exception is not None:
+                msg = "ERROR!"
+                log.error(exception)
+
+                if self.callback_notify:
+                    self.callback_notify(CanolaError(msg))
+                return
+
+            for pic in retval.entry:
+                    ImageModel(pic.title.text, self, pic)
+
+            self.inform_loaded()
+
+        self.is_loading = True
+        ThreadedFunction(refresh_finished, refresh).start()
 
     def delete_model(self):
         action = picasa_manager.delete_album(self.prop["album_id"])
