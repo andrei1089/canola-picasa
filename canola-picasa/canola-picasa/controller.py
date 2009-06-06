@@ -18,11 +18,17 @@ import evas
 import ecore
 import locale
 import logging
+import os
+
+#TODO: remove this
+import urllib
 
 from terra.core.manager import Manager
 from terra.ui.base import PluginThemeMixin
 from terra.core.controller import Controller
 from terra.core.threaded_func import ThreadedFunction
+
+from ui import ImageGridScreen
 
 manager = Manager()
 GeneralActionButton = manager.get_class("Widget/ActionButton")
@@ -202,8 +208,177 @@ class ServiceController(BaseListController, OptionsControllerMixin):
         return self.model.options_model_get(self)
 
 
-IController = manager.get_class("Controller/Folder")
-
-class AlbumController(IController):
+class AlbumController(Controller):
     terra_type = "Controller/Folder/Image/Picasa/Album"
+
+    def __init__(self, model, canvas, parent):
+        Controller.__init__(self, model, canvas, parent)
+        self.animating = False
+        self.model.load()
+        self._setup_view()
+        self.model.updated = False
+
+        self.thumb_request_list = []
+
+        # should be after setup UI
+        self.model.changed_callback_add(self._update_ui)
+
+        self._check_model_loaded()
+
+    def do_resume(self):
+        if self.model.updated:
+            self.model.updated = False
+            self.view.force_redraw()
+
+    def _check_model_loaded(self):
+        if self.model.is_loaded:
+            self.view.loaded()
+        else:
+            self.model.callback_loaded = self._model_loaded
+
+    def _model_loaded(self, model):
+        self.view.loaded()
+        self.model.callback_loaded = None
+
+    def _setup_view(self):
+        title = self.model.name
+        self.view = ImageGridScreen(self.evas, self.parent.view, title,
+                              self.model.children)
+        self.view.callback_create_thumb = self._cb_create_thumb
+        self.view.callback_cancel_thumb = self._thumb_request_cancel
+        self.view.callback_clicked = self.cb_on_clicked
+
+    def _cb_create_thumb(self, model, callback):
+        #TODO: load thumb with downloadmanager, use thumbnailer to crop picture
+        print "!!!!!!" + model.thumb_path
+        print str(model.thumb_width) + " " + str(model.thumb_height)
+        if not os.path.exists(model.thumb_path):
+            urllib.urlretrieve(model.thumb_url, model.thumb_path)
+
+        callback(model)
+        return None, None
+    #if self._thumb_fetch_from_db(model):
+        #    if os.path.exists(model.thumb_path):
+        #        callback(model)
+        #        return None, None
+        #return self._thumb_request(model, callback)
+
+    def _thumb_request(self, model, callback):
+        if not model:
+            return True
+
+        def _thumb_request_cb(path, thumb_path, w, h):
+            log.debug("Thumbnailer callback called with: %s", path)
+            if thumb_path:
+                model.thumb_path = thumb_path
+                model.thumb_width = w
+                model.thumb_height = h
+                try:
+                    stat_thumb = os.stat(thumb_path)
+                except OSError, e:
+                    return True
+                r = self._db.execute("REPLACE INTO thumbnails VALUES (" \
+                                     "%d, '%s', %d, %d, %d )" % \
+                                     (model.id, thumb_path, w, h,
+                                      stat_thumb.st_mtime))
+                r.close()
+                callback(model)
+            else:
+                log.warning("Could not generate image thumb for %s", \
+                            model.path)
+
+        id = None
+        if self.thumbler:
+            id = self.thumbler.request_add(model.path,
+                                           epsilon.EPSILON_THUMB_NORMAL,
+                                           epsilon.EPSILON_THUMB_CROP,
+                                           128, 128,
+                                           _thumb_request_cb)
+
+        return id, _thumb_request_cb
+
+    def _thumb_request_cancel(self, *args, **kargs):
+        print "thumb request cancel"
+        #self.thumbler.request_cancel(*args)
+
+    def _thumb_request_cancel_all(self, *args, **kargs):
+        print "thumb request cancel all"
+        #self.thumbler.request_cancel_all(*args)
+
+    #def _thumb_fetch_from_db(self, model):
+    #    try:
+    #        r = self._db.execute("SELECT * FROM thumbnails WHERE id = %d" \
+            #                             % model.id)
+    #    except sqlite3.OperationalError, e:
+    #        log.error("table 'thumbnails' doesn't exist")
+
+    #    row = r.fetchone()
+    #    r.close()
+    #    if row:
+    #        id, path, width, height, mtime = row
+    #        if model.mtime <= mtime:
+    #            model.thumb_path = path
+    #            model.thumb_width = width
+    #            model.thumb_height = height
+    #            return True
+
+    #    return False
+
+    def _update_ui(self, model):
+        self.view.model_updated()
+
+    def delete(self):
+        self.model.changed_callback_del(self._update_ui)
+        self.view.delete()
+        self.model.unload()
+        self._db.commit()
+        self._db.close()
+
+    def back(self):
+        if self.animating:
+            return
+
+        def end(*ignored):
+            self.animating = False
+
+        self.animating = True
+        self.parent.back(end)
+
+    def cb_on_animation_ended(self, *ignored):
+        self.animating = False
+
+    def cb_on_clicked(self, view, index):
+        print "image clicked"
+        #if self.animating:
+        #    return
+
+        #def end(*ignored):
+        #    self.animating = False
+
+        #self.model.current = index
+        #self._thumb_request_cancel_all()
+        #controller = ImageInternalController(self.model, self.view.evas,
+        #                                     self.parent)
+        #self.animating = True
+        #self.parent.use(controller, end)
+
+    def go_home(self):
+        self.parent.go_home()
+
+    def force_view_redraw(self):
+        self.view.force_redraw()
+
+    def reset_model(self):
+        self.view.freeze()
+        for c in self.model.children:
+            c.reset()
+        self.view.thaw()
+
+    def do_suspend(self):
+        print "!do_suspend"
+
+    def delete(self):
+        print "!delete"
+        #self.thumbler.stop()
+
 

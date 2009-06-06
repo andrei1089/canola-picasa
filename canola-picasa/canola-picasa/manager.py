@@ -143,25 +143,20 @@ if __name__ == "__main__":
     p.login()
     print p.is_logged()
 
-    g = PicasaManager()
-    print g.is_logged()
+    al=[]
+    p.refresh_user_albums('canolapicasa')
+    x = p.get_user_albums()
+    for i in x.entry:
+        al.append(i)
 
-    #al=[]
-    #p.refresh_user_albums('canolapicasa')
-    #x = p.get_user_albums()
-    #for i in x.entry:
-    #    al.append(i)
+    x= p.get_user_albums()
+    z=[]
+    for i in x.entry:
+        print i.title.text
+        z.append(i.gphoto_id.text)
+        zz = i
 
-    #x= p.get_user_albums()
-    #z=[]
-    #for i in x.entry:
-    #    print i.title.text
-    #    z.append(i.gphoto_id.text)
-    #    zz = i
-
-    #y=p.get_photos_from_album(zz)
-
-    #for i in y.entry:
-    #	zz=i;
-    #a=p.get_photos_from_album(zz)
+    y=p.get_photos_from_album(zz.gphoto_id.text)
+    for i in y.entry:
+    	zz=i
 

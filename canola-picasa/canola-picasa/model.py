@@ -87,12 +87,23 @@ class MainModelFolder(ModelFolder, Task):
         self.is_loading = True
         ThreadedFunction(refresh_finished, refresh).start()
 
-class ImageModel(ModelFolder):
-    terra_type = "Model/Folder/Image/Picasa/Album/Image"
+class ImageModel(Model):
+    terra_type = "Model/Media/Image/Picasa"
 
     def __init__(self, name, parent, image):
         self.image = image
-        ModelFolder.__init__(self, name, parent)
+
+        self.path = "/home/andrei/.thumbnails/canola/1aff55242eccf07f2327185b94d69400.jpg"
+
+        self.id = image.gphoto_id.text
+        self.thumb_width = image.media.thumbnail[1].width
+        self.thumb_height = image.media.thumbnail[1].height
+        self.thumb_url = image.media.thumbnail[1].url
+        self.thumb_path = picasa_manager.get_thumbs_path() + "/" + str(self.id) + ".jpg"
+        self.width = self.thumb_width
+        self.height = self.thumb_height
+
+        Model.__init__(self, name, parent)
 
 
 class AlbumModel(ModelFolder):
