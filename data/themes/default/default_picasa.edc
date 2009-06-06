@@ -338,7 +338,7 @@
                text {
                   font: "Nokia Sans";
                   size: 20;
-                  text: "From: someone";
+                  text: "album description";
                   align: 0.0 0.5;
                }
             }
@@ -644,7 +644,7 @@
                text {
                   font: "Nokia Sans";
                   size: 20;
-                  text: "From: someone";
+                  text: "album description";
                   align: 0.0 0.5;
                }
             }
@@ -659,13 +659,13 @@
                state: "default" 0.0;
                rel1 {
                   relative: 1.0 0.0;
-                  offset: 10 77;
+                  offset: 20 77;
                   to_y: "normal";
                   to_x: "no-thumb";
                }
                rel2 {
                   relative: 1.0 0.0;
-                  offset: -16 77;
+                  offset: -10 77;
                   to: "normal";
                }
                color: 255 255 255 225;
@@ -686,13 +686,13 @@
                state: "default" 0.0;
                rel1 {
                   relative: 1.0 0.0;
-                  offset: 10 90;
+                  offset: 400 77;
                   to_y: "normal";
                   to_x: "no-thumb";
                }
                rel2 {
                   relative: 1.0 0.0;
-                  offset: -16 90;
+                  offset: -16 77;
                   to: "normal";
                }
                color: 255 255 255 225;
@@ -714,7 +714,7 @@
                state: "default" 0.0;
                rel1 {
                   relative: 1.0 0.0;
-                  offset: 130 77;
+                  offset: 235 77;
                   to_y: "normal";
                   to_x: "no-thumb";
                }
