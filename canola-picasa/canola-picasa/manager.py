@@ -154,6 +154,7 @@ if __name__ == "__main__":
     for i in x.entry:
         print i.title.text
         z.append(i.gphoto_id.text)
+
         zz = i
 
     y=p.get_photos_from_album(zz.gphoto_id.text)

@@ -90,16 +90,26 @@ class MainModelFolder(ModelFolder, Task):
 class ImageModel(Model):
     terra_type = "Model/Media/Image/Picasa"
 
-    def __init__(self, name, parent, image):
-        self.image = image
+    def __init__(self, name, parent, image, index):
 
-        self.path = "/home/andrei/.thumbnails/canola/1aff55242eccf07f2327185b94d69400.jpg"
+        self.image = image
+        self.index = index
 
         self.id = image.gphoto_id.text
+        print "loading image " + str(self.id)
         self.thumb_width = image.media.thumbnail[1].width
         self.thumb_height = image.media.thumbnail[1].height
         self.thumb_url = image.media.thumbnail[1].url
-        self.thumb_path = picasa_manager.get_thumbs_path() + "/" + str(self.id) + ".jpg"
+        self.thumb_save_path = picasa_manager.get_thumbs_path() + "/th_" + str(self.id) + ".jpg"
+
+        self.path = picasa_manager.get_thumbs_path() + "/" + str(self.id) + ".jpg"
+        self.url = image.media.content[0].url
+        self.width = image.media.content[0].width
+        self.height = image.media.content[0].height
+
+        self.downloader = None
+        self.downloader_thumb = None
+
         self.width = self.thumb_width
         self.height = self.thumb_height
 
@@ -113,6 +123,7 @@ class AlbumModel(ModelFolder):
         self.prop = prop
         self.callback_notify = None
         ModelFolder.__init__(self, name, parent)
+        self.size = 0
 
     def request_thumbnail(self, end_callback=None):
         def request(*ignored):
@@ -136,6 +147,7 @@ class AlbumModel(ModelFolder):
             return picasa_manager.get_photos_from_album(self.prop["album_id"]);
 
         def refresh_finished(exception, retval):
+
             #TODO: get specific error
             if exception is not None:
                 msg = "ERROR!"
@@ -145,7 +157,8 @@ class AlbumModel(ModelFolder):
                     self.callback_notify(CanolaError(msg))
             else:
                 for pic in retval.entry:
-                        ImageModel(pic.title.text, self, pic)
+                        ImageModel(pic.title.text, self, pic, self.size)
+                        self.size += 1
 
             self.inform_loaded()
 

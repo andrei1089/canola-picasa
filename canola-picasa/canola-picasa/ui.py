@@ -34,6 +34,8 @@ from terra.ui.screen import Screen
 from terra.ui.kinetic import KineticMouse
 from terra.core.terra_object import TerraObject
 
+from utils import *
+
 
 __all__ = ("ImageInternalScreen",
            "ImageFullScreen",
@@ -41,6 +43,9 @@ __all__ = ("ImageInternalScreen",
 
 
 mger = Manager()
+DownloadManager = mger.get_class("DownloadManager")
+download_mger = DownloadManager()
+
 log = logging.getLogger("canola.plugins.images.ui")
 KineticGridWidget = mger.get_class("Widget/KineticGrid")
 
@@ -506,8 +511,12 @@ class ImageFrameInternal(ImageFrameWidget):
         self.size_set(frame_w, self.size_max[1])
 
     def file_set_cb(self):
-        self.image_set(self.model.path)
-        self.update()
+
+        def down_finish_cb():
+            self.image_set(self.model.path)
+            self.update()
+
+        download_file( self.model, self.model.path, self.model.url, down_finish_cb, down_finish_cb, down_finish_cb)
 
     def update(self):
         self.part_text_set("details", self.model.name)
@@ -834,11 +843,9 @@ class ImageFullScreen(Screen, TerraObject):
 
     def image_prev_next_preload(self, prev, next):
         if prev:
-            self.prev_image.file_set(prev.path)
-            self.prev_image.preload()
+            download_file(prev, prev.path, prev.url, self.prev_image.preload, self.prev_image.preload, self.prev_image.preload)
         if next:
-            self.next_image.file_set(next.path)
-            self.next_image.preload()
+            download_file(next, next.path, next.url, self.next_image.preload, self.next_image.preload, self.next_image.preload)
 
     def image_current_get(self):
         return self.image_frame_cur.image
@@ -847,7 +854,11 @@ class ImageFullScreen(Screen, TerraObject):
         self.part_swallow("image_new", self.image_frame_new)
         self.calc_force()
         self.hide_image()
-        self.image_frame_new.image_set(model, end_callback)
+
+        def down_finish_cb():
+            self.image_frame_new.image_set(model, end_callback)
+
+        download_file( model, model.path, model.url, down_finish_cb, down_finish_cb, down_finish_cb)
 
     def show_image(self, slideshow=False):
         if slideshow:
