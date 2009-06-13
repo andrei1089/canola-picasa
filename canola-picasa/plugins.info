@@ -1,5 +1,5 @@
 [Picasa Model]
-modname = canola-picasa.model
+modname = picasa.model
 enabled = True
 rank = 256
 filter_map = Icon/Folder/Task/Image/Picasa - Icon
@@ -9,13 +9,13 @@ filter_map = Icon/Folder/Task/Image/Picasa - Icon
              Model/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload - FullScreenUploadOptions
 
 [Picasa Controller]
-modname = canola-picasa.controller
+modname = picasa.controller
 enabled = True
 rank = 256
 filter_map = Controller/Folder/Task/Image/Picasa/Service - ServiceController
              Controller/Folder/Image/Picasa/Album - AlbumController
 [Picasa Options]
-modname = canola-picasa.options
+modname = picasa.options
 enabled = True
 rank = 256
 filter_map = Controller/Settings/Folder/InternetMedia/Picasa - OptionsController
