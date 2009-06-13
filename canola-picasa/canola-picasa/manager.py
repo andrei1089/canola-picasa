@@ -86,6 +86,7 @@ class PicasaManager(Singleton):
         try:
             self.gd_client.ProgrammaticLogin()
             self.logged = True
+            self.albums = None
         except gdata.service.BadAuthentication, X:
             self.login_error = X.message
             self.logged = False
