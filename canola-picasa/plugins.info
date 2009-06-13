@@ -21,3 +21,4 @@ rank = 256
 filter_map = Controller/Settings/Folder/InternetMedia/Picasa - OptionsController
              Controller/Settings/Folder/InternetMedia/Picasa/UserPass - UserPassController
              Controller/Options/Folder/Image/Picasa/Album/AddAlbum - PicasaAddAlbumOptionController
+             Controller/Settings/Folder/InternetMedia/Picasa/ClearCache - ClearCacheController

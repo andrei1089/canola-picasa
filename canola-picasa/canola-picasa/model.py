@@ -16,6 +16,7 @@
 
 import os
 import edje
+import ecore
 import logging
 import urllib
 from manager import PicasaManager
@@ -272,7 +273,7 @@ class OptionsModel(ModelFolder):
 
     def do_load(self):
         UserPassOptionsModel(self)
-
+        ClearCacheModel(self)
 
 MixedListItemDual = manager.get_class("Model/Settings/Folder/MixedList/Item/Dual")
 class UserPassOptionsModel(MixedListItemDual):
@@ -300,6 +301,84 @@ class UserPassOptionsModel(MixedListItemDual):
     def on_right_button_clicked(self):
         self.callback_use(self)
 
+ItemRenderer = manager.get_class("Renderer/EtkList/Item")
+class MixedListItem(ModelFolder):
+    terra_type = "Model/Settings/Folder/MixedList/Item"
+    title = ""
+
+    def __init__(self, parent=None):
+        ModelFolder.__init__(self, self.title, parent)
+
+        self.callback_use = None
+        self.callback_update = None
+        self.callback_killall = None
+
+        self.__create_renderer()
+
+    def __create_renderer(self):
+        def _get_state(row):
+            return row.get_state()
+
+        def _on_clicked(row, list):
+            row.on_clicked()
+
+        self.renderer = ItemRenderer(text_func=_get_state,
+                                          item_click=_on_clicked)
+
+    def get_state(self):
+        return self.title
+
+    def on_clicked(self):
+        raise NotImplementedError("must be implemented by subclasses")
+
+    def do_load(self):
+        pass
+
+class ClearCacheModel(MixedListItem):
+    terra_type = "Model/Settings/Folder/InternetMedia/Picasa/ClearCache"
+    title = "Clear cache"
+
+    def __init__(self, parent=None):
+        MixedListItem.__init__(self, parent)
+        self.callback_locked = None
+        self.cnt = 0
+        self.done = False
+        self.result = "Cache cleared"
+
+    def on_clicked(self):
+        self.callback_use(self)
+
+    def execute(self):
+        if self.callback_killall:
+            self.callback_killall()
+
+        if self.callback_locked:
+            self.callback_locked()
+
+        th_path = picasa_manager.get_thumbs_path()
+        file_list = os.listdir(th_path)
+
+        try:
+            for file in file_list:
+                os.remove( os.path.join(th_path, file))
+                self.cnt += 1
+                if self.cnt % 10 == 0 and self.callback_refresh:
+                    self.callback_refresh()
+        except:
+            log.error("Error while clearing the cache")
+            self.result = "ERROR!"
+            self.cnt = -1
+
+        if self.cnt >= 0:
+            self.result = self.result + "<br> %d files deleted" % self.cnt
+
+        self.done = True
+        self.callback_refresh()
+        ecore.timer_add(1, self._unlocked_cb)
+
+    def _unlocked_cb(self):
+        if self.callback_unlocked:
+            self.callback_unlocked()
 
 ###########################################
 #Options Model

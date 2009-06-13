@@ -15,17 +15,18 @@
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import etk
 import ecore
+import evas.decorators
 import logging
 
 from terra.core.manager import Manager
 from terra.core.threaded_func import ThreadedFunction
+from terra.ui.modal import Modal
+from terra.ui.throbber import EtkThrobber
 
 from manager import PicasaManager
 
 manager = Manager()
 picasa_manager = PicasaManager()
-
-network = manager.get_status_notifier("Network")
 
 ModalController = manager.get_class("Controller/Modal")
 PanelContentModal = manager.get_class("Widget/Settings/PanelContentModal")
@@ -41,6 +42,71 @@ log = logging.getLogger("plugins.canola-picasa.options")
 class OptionsController(MixedListController):
     terra_type = "Controller/Settings/Folder/InternetMedia/Picasa"
 
+class MessageView(Modal):
+    def __init__(self, parent, title):
+        Modal.__init__(self, parent.view, title,
+                       parent.view.theme, hborder=16,
+                       vborder=20)
+
+        self.title = ""
+        self.embed = etk.Embed(self.evas)
+        self.throbber = EtkThrobber("Clearing cache")
+        self.throbber.show()
+        self.throbber_align = \
+            etk.Alignment(0.5, 0.4, 0.0, 0.0, child=self.throbber)
+        self.throbber_align.show()
+        self.embed.add(self.throbber_align)
+        self.embed.show()
+        self.contents = self.embed.object
+
+    def message(self, hide_cb=None):
+        self.throbber.callback_animate_hide_finished = hide_cb
+        self.throbber.start()
+        self.show()
+        self.half_expand()
+
+    @evas.decorators.del_callback
+    def _destroy_message(self):
+        self.embed.destroy()
+        self.embed = None
+
+class ClearCacheController(ModalController):
+    terra_type = "Controller/Settings/Folder/InternetMedia/Picasa/ClearCache"
+
+    def __init__(self, model, canvas, parent):
+        print "controller init"
+        ModalController.__init__(self, model, canvas, parent)
+
+        model.callback_locked = self.start
+        model.callback_unlocked = self.stop
+        model.callback_killall = self.parent.killall
+        model.callback_refresh = self.update_text
+
+        self.view = MessageView(parent, model.title)
+        self.model.execute()
+
+    def start(self):
+        self.view.message(hide_cb=self.stop)
+        self.model.callback_locked = None
+
+    def stop(self):
+        def cb():
+            self.parent.back()
+        self.view.hide(cb)
+
+    def update_text(self):
+        if not self.model.done:
+            self.view.throbber.text_set("%d files deleted" % self.model.cnt)
+        else:
+            self.view.throbber.text_set(self.model.result)
+
+    def delete(self):
+        self.view.delete()
+        self.view = None
+        self.model.callback_locked = None
+        self.model.callback_unlocked = None
+        self.model.callback_killall = None
+        self.model.callback_refresh = None
 
 class UserPassController(ModalController):
     terra_type = "Controller/Settings/Folder/InternetMedia/Picasa/UserPass"
