@@ -50,7 +50,7 @@ class MessageView(Modal):
 
         self.title = ""
         self.embed = etk.Embed(self.evas)
-        self.throbber = EtkThrobber("Clearing cache")
+        self.throbber = EtkThrobber(title)
         self.throbber.show()
         self.throbber_align = \
             etk.Alignment(0.5, 0.4, 0.0, 0.0, child=self.throbber)
@@ -74,7 +74,6 @@ class ClearCacheController(ModalController):
     terra_type = "Controller/Settings/Folder/InternetMedia/Picasa/ClearCache"
 
     def __init__(self, model, canvas, parent):
-        print "controller init"
         ModalController.__init__(self, model, canvas, parent)
 
         model.callback_locked = self.start
@@ -103,6 +102,7 @@ class ClearCacheController(ModalController):
     def delete(self):
         self.view.delete()
         self.view = None
+        self.model.result = None
         self.model.callback_locked = None
         self.model.callback_unlocked = None
         self.model.callback_killall = None
@@ -272,4 +272,35 @@ class PicasaAddAlbumOptionController(ModalController):
         self.view.delete()
         self.view = None
         self.model = None
+
+MixedListController = manager.get_class("Controller/Settings/Folder/MixedList")
+class PhotocastSyncController(MixedListController):
+    terra_type = "Controller/Options/Folder/Image/Picasa/Album/Photocast"
+
+class PhotocastRefreshController(ModalController):
+    terra_type = "Controller/Options/Folder/Image/Picasa/Album/Photocast/Refresh"
+
+    def __init__(self, model, canvas, parent):
+        ModalController.__init__(self, model, canvas, parent)
+
+        model.callback_locked = self.start
+        model.callback_unlocked = self.stop
+
+        self.view = MessageView(parent, model.message_text)
+        self.model.execute()
+
+    def start(self):
+        self.view.message(hide_cb=self.stop)
+        self.model.callback_locked = None
+
+    def stop(self):
+        def cb():
+            self.parent.back()
+        self.view.hide(cb)
+
+    def delete(self):
+        self.view.delete()
+        self.view = None
+        self.model.callback_locked = None
+        self.model.callback_unlocked = None
 

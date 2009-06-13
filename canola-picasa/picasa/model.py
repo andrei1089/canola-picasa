@@ -343,12 +343,12 @@ class ClearCacheModel(MixedListItem):
         self.callback_locked = None
         self.cnt = 0
         self.done = False
-        self.result = "Cache cleared"
 
     def on_clicked(self):
         self.callback_use(self)
 
     def execute(self):
+        self.result = "Cache cleared"
         if self.callback_killall:
             self.callback_killall()
 
@@ -417,6 +417,59 @@ class PicasaTestOptionModel(OptionsActionModel):
     def execute(self):
         print "option clicked"
 
+MixedListItemOnOff = manager.get_class("Model/Settings/Folder/MixedList/Item/OnOff")
+class PhotocastOnOffModel(MixedListItemOnOff):
+    terra_type = "Model/Options/Folder/Image/Picasa/Album/PhotocastOnOff"
+    title = "Photocast sync"
+
+    def __init__(self, parent=None):
+        MixedListItemOnOff.__init__(self, parent)
+        self.state = True
+        self.title = "Sync Photocast"
+
+    def get_state(self):
+        return (self.title, self.state)
+
+    def on_clicked(self):
+        self.state = not self.state
+        self.callback_update(self)
+
+class PhotocastRefreshModel(MixedListItem):
+    terra_type = "Model/Options/Folder/Image/Picasa/Album/Photocast/Refresh"
+    title = "Refresh"
+    message_text = "DONE"
+
+    def __init__(self, parent=None):
+        MixedListItem.__init__(self, parent)
+        self.callback_locked = None
+
+    def on_clicked(self):
+        self.callback_use(self)
+
+    def execute(self):
+
+        print "refreshing feeds"
+
+        if self.callback_locked:
+            self.callback_locked()
+
+    def _unlocked_cb(self):
+        if self.callback_unlocked:
+            self.callback_unlocked()
+
+
+class PhotocastSyncModel(ModelFolder):
+    terra_type = "Model/Options/Folder/Image/Picasa/Album/Photocast"
+    title = "Photocast"
+
+    def __init__(self, parent=None):
+        ModelFolder.__init__(self, self.title, parent)
+
+    def do_load(self):
+        PhotocastOnOffModel(self)
+        PhotocastRefreshModel(self)
+
+
 class PicasaAlbumOptionModel(OptionsModelFolder):
     terra_type = "Model/Options/Folder/Image/Picasa"
     title = "Picasa Options"
@@ -424,6 +477,7 @@ class PicasaAlbumOptionModel(OptionsModelFolder):
     def do_load(self):
         PicasaTestOptionModel(self)
         PicasaAddAlbumOptionModel(self)
+        PhotocastSyncModel(self)
 
 class FullScreenUploadOptions(OptionsModelFolder):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload"
