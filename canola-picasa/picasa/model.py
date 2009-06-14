@@ -19,15 +19,18 @@ import edje
 import ecore
 import logging
 import urllib
+from time import time
 from manager import PicasaManager
 
 from terra.core.task import Task
 from terra.core.manager import Manager
 from terra.core.model import Model, ModelFolder
 from terra.core.threaded_func import ThreadedFunction
+from terra.core.plugin_prefs import PluginPrefs
 
 
 manager = Manager()
+db = manager.canola_db
 picasa_manager = PicasaManager()
 
 PluginDefaultIcon = manager.get_class("Icon/Plugin")
@@ -424,34 +427,49 @@ class PhotocastOnOffModel(MixedListItemOnOff):
 
     def __init__(self, parent=None):
         MixedListItemOnOff.__init__(self, parent)
-        self.state = True
+        self.parent = parent
         self.title = "Sync Photocast"
 
     def get_state(self):
-        return (self.title, self.state)
+        return (self.title, self.parent._state)
 
     def on_clicked(self):
-        self.state = not self.state
+        self.parent._change_state()
+        if self.parent._state:
+            self.parent._insert_albums()
+        else:
+            self.parent._remove_albums()
+
         self.callback_update(self)
 
 class PhotocastRefreshModel(MixedListItem):
     terra_type = "Model/Options/Folder/Image/Picasa/Album/Photocast/Refresh"
     title = "Refresh"
-    message_text = "DONE"
+    message_text = ""
 
     def __init__(self, parent=None):
         MixedListItem.__init__(self, parent)
         self.callback_locked = None
+        self.callback_refresh = None
+        self.parent = parent
 
     def on_clicked(self):
         self.callback_use(self)
 
     def execute(self):
+        if self.parent._state:
+            self.parent._remove_albums()
+            self.parent._insert_albums()
+            self.message_text = "DONE"
+        else:
+            self.message_text = "Activate sync first"
 
-        print "refreshing feeds"
+        if self.callback_refresh:
+            self.callback_refresh()
 
         if self.callback_locked:
             self.callback_locked()
+        ecore.timer_add(1.5, self._unlocked_cb)
 
     def _unlocked_cb(self):
         if self.callback_unlocked:
@@ -461,9 +479,69 @@ class PhotocastRefreshModel(MixedListItem):
 class PhotocastSyncModel(ModelFolder):
     terra_type = "Model/Options/Folder/Image/Picasa/Album/Photocast"
     title = "Photocast"
+    table = "photocast_feeds"
+
+    stmt_select = "SELECT id, uri, title, desc, author FROM %s" % table
+    stmt_delete = "DELETE FROM %s" % table
+    stmt_insert = "INSERT INTO %s (uri, title, desc, author, epoch) VALUES ( ?, ?, ?, ?, ?)" % table
 
     def __init__(self, parent=None):
         ModelFolder.__init__(self, self.title, parent)
+        self.prefs = PluginPrefs('picasa')
+        try:
+            self._state = self.prefs["photocast_sync"]
+        except KeyError:
+            self._state = False
+            self.prefs["photocast_sync"] = self._state
+            self.prefs.save()
+
+    def _change_state(self):
+        self._state = not self._state
+        self.prefs["photocast_sync"] = self._state
+        self.prefs.save()
+
+    def _remove_albums(self):
+        cur = db.get_cursor()
+
+        self.select_cond = r" WHERE uri LIKE '%" + picasa_manager.getUser() + r"%' AND title LIKE '%[PICASA]%'"
+        self.query = self.stmt_delete + self.select_cond
+
+        rows = cur.execute(self.query)
+
+        db.commit()
+        cur.close()
+
+    def _insert_albums(self):
+        cur = db.get_cursor()
+        albums = picasa_manager.get_user_albums()
+
+        for album in albums.entry:
+            if album.access.text == "protected":
+                #TODO: protected albums can't be accessed with authkey
+                continue
+
+            name = "[PICASA]" + album.title.text
+            try:
+                author = album.author[0].name.text
+            except:
+                author = ""
+            description = album.summary.text
+            epoch = int(time())
+            url = album.id.text.replace("/entry/api/", "/feed/base/", 1) + "?kind=photo&alt=rss&hl=en_GB"
+
+            #adding authkey in the url for private and proteced albums
+            #authkey seems to be valid for 2 weeks
+            if ( album.access.text != "public"):
+                auth_index = album.link[0].href.rfind("authkey=")
+                auth_key=  album.link[0].href[auth_index:]
+                url = url + "&" + auth_key
+            try:
+                db.execute(self.stmt_insert, (url, name, description, author, epoch) )
+            except:
+                log.error("Error while adding feed in db")
+
+        db.commit()
+        cur.close()
 
     def do_load(self):
         PhotocastOnOffModel(self)

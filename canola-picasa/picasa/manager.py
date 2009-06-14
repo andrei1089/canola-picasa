@@ -160,5 +160,5 @@ if __name__ == "__main__":
 
     y=p.get_photos_from_album(zz.gphoto_id.text)
     for i in y.entry:
-    	zz=i
+    	zzz=i
 

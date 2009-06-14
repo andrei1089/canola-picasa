@@ -285,6 +285,7 @@ class PhotocastRefreshController(ModalController):
 
         model.callback_locked = self.start
         model.callback_unlocked = self.stop
+        model.callback_refresh = self.update_text
 
         self.view = MessageView(parent, model.message_text)
         self.model.execute()
@@ -303,4 +304,8 @@ class PhotocastRefreshController(ModalController):
         self.view = None
         self.model.callback_locked = None
         self.model.callback_unlocked = None
+
+    def update_text(self):
+        self.view.throbber.text_set(self.model.message_text)
+
 
