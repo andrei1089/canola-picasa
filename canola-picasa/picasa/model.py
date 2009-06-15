@@ -50,7 +50,6 @@ class MainModelFolder(ModelFolder, Task):
     terra_type = "Model/Folder/Task/Image/Picasa"
     terra_task_type = "Task/Folder/Task/Image/Picasa"
 
-
     def __init__(self, parent):
         Task.__init__(self)
         ModelFolder.__init__(self, "Picasa plugin", parent)
@@ -100,13 +99,14 @@ class ImageModel(Model):
         self.index = index
 
         self.id = image.gphoto_id.text
-        print "loading image " + str(self.id)
         self.thumb_width = image.media.thumbnail[1].width
         self.thumb_height = image.media.thumbnail[1].height
         self.thumb_url = image.media.thumbnail[1].url
-        self.thumb_save_path = picasa_manager.get_thumbs_path() + "/th_" + str(self.id) + ".jpg"
+        self.thumb_save_path = picasa_manager.get_thumbs_path() + "/th_" + \
+                                                        str(self.id) + ".jpg"
 
-        self.path = picasa_manager.get_thumbs_path() + "/" + str(self.id) + ".jpg"
+        self.path = picasa_manager.get_thumbs_path() + "/" + \
+                                                        str(self.id) + ".jpg"
         self.url = image.media.content[0].url
         self.width = image.media.content[0].width
         self.height = image.media.content[0].height
@@ -126,8 +126,9 @@ class AlbumModel(ModelFolder):
     def __init__(self, name, parent, prop):
         self.prop = prop
         self.callback_notify = None
-        ModelFolder.__init__(self, name, parent)
         self.size = 0
+
+        ModelFolder.__init__(self, name, parent)
 
     def request_thumbnail(self, end_callback=None):
         def request(*ignored):
@@ -137,7 +138,8 @@ class AlbumModel(ModelFolder):
             if end_callback:
                 end_callback()
 
-        if not self.prop["thumb_url"] or os.path.exists(self.prop["thumb_local"]):
+        if not self.prop["thumb_url"] or \
+                                os.path.exists(self.prop["thumb_local"]):
             if end_callback:
                 end_callback()
         else:
@@ -151,7 +153,6 @@ class AlbumModel(ModelFolder):
             return picasa_manager.get_photos_from_album(self.prop["album_id"]);
 
         def refresh_finished(exception, retval):
-
             #TODO: get specific error
             if exception is not None:
                 msg = "ERROR!"
@@ -171,7 +172,8 @@ class AlbumModel(ModelFolder):
 
     def delete_model(self):
         action = picasa_manager.delete_album(self.prop["album_id"])
-        log.debug("deleting album with id: %s, operation result: %s" % (self.prop["album_id"], action) )
+        log.debug("deleting album with id: %s, operation result: %s" % \
+                                            (self.prop["album_id"], action))
 
 
 class ServiceModelFolder(ModelFolder):
@@ -224,7 +226,8 @@ class ServiceModelFolder(ModelFolder):
         prop = {}
         prop["album_title"] = album.title.text
         prop["album_id"] = album.gphoto_id.text
-        prop["thumb_local"]= os.path.join( picasa_manager.get_thumbs_path(), prop["album_id"] + ".jpg")
+        prop["thumb_local"]= os.path.join( picasa_manager.get_thumbs_path(), \
+                                                    prop["album_id"] + ".jpg")
         prop["thumb_url"] = album.media.thumbnail[0].url
         prop["date"] = album.updated.text[:10]
         prop["access"] = album.access.text
@@ -242,7 +245,6 @@ class AlbumModelFolder(ServiceModelFolder):
 
     def __init__(self, name,parent):
         ServiceModelFolder.__init__(self, name, parent)
-
 
     def do_search(self):
         self.albums = picasa_manager.get_user_albums()
@@ -278,7 +280,8 @@ class OptionsModel(ModelFolder):
         UserPassOptionsModel(self)
         ClearCacheModel(self)
 
-MixedListItemDual = manager.get_class("Model/Settings/Folder/MixedList/Item/Dual")
+MixedListItemDual = \
+                manager.get_class("Model/Settings/Folder/MixedList/Item/Dual")
 class UserPassOptionsModel(MixedListItemDual):
     terra_type = "Model/Settings/Folder/InternetMedia/Picasa/UserPass"
     title = "Login to Picasa"
@@ -363,7 +366,7 @@ class ClearCacheModel(MixedListItem):
 
         try:
             for file in file_list:
-                os.remove( os.path.join(th_path, file))
+                os.remove(os.path.join(th_path, file))
                 self.cnt += 1
                 if self.cnt % 10 == 0 and self.callback_refresh:
                     self.callback_refresh()
@@ -420,7 +423,8 @@ class PicasaTestOptionModel(OptionsActionModel):
     def execute(self):
         print "option clicked"
 
-MixedListItemOnOff = manager.get_class("Model/Settings/Folder/MixedList/Item/OnOff")
+MixedListItemOnOff = \
+                manager.get_class("Model/Settings/Folder/MixedList/Item/OnOff")
 class PhotocastOnOffModel(MixedListItemOnOff):
     terra_type = "Model/Options/Folder/Image/Picasa/Album/PhotocastOnOff"
     title = "Photocast sync"
@@ -483,7 +487,8 @@ class PhotocastSyncModel(ModelFolder):
 
     stmt_select = "SELECT id, uri, title, desc, author FROM %s" % table
     stmt_delete = "DELETE FROM %s" % table
-    stmt_insert = "INSERT INTO %s (uri, title, desc, author, epoch) VALUES ( ?, ?, ?, ?, ?)" % table
+    stmt_insert = "INSERT INTO %s (uri, title, desc, author, epoch) VALUES \
+                                                    ( ?, ?, ?, ?, ?)" % table
 
     def __init__(self, parent=None):
         ModelFolder.__init__(self, self.title, parent)
@@ -503,10 +508,10 @@ class PhotocastSyncModel(ModelFolder):
     def _remove_albums(self):
         cur = db.get_cursor()
 
-        self.select_cond = r" WHERE uri LIKE '%" + picasa_manager.getUser() + r"%' AND title LIKE '%[PICASA]%'"
+        self.select_cond = r" WHERE uri LIKE '%" + picasa_manager.getUser() + \
+                                            r"%' AND title LIKE '%[PICASA]%'"
         self.query = self.stmt_delete + self.select_cond
-
-        rows = cur.execute(self.query)
+        cur.execute(self.query)
 
         db.commit()
         cur.close()
@@ -527,7 +532,8 @@ class PhotocastSyncModel(ModelFolder):
                 author = ""
             description = album.summary.text
             epoch = int(time())
-            url = album.id.text.replace("/entry/api/", "/feed/base/", 1) + "?kind=photo&alt=rss&hl=en_GB"
+            url = album.id.text.replace("/entry/api/", "/feed/base/", 1) + \
+                                                "?kind=photo&alt=rss&hl=en_GB"
 
             #adding authkey in the url for private and proteced albums
             #authkey seems to be valid for 2 weeks
@@ -536,7 +542,8 @@ class PhotocastSyncModel(ModelFolder):
                 auth_key=  album.link[0].href[auth_index:]
                 url = url + "&" + auth_key
             try:
-                db.execute(self.stmt_insert, (url, name, description, author, epoch) )
+                db.execute(self.stmt_insert, (url, name, description, \
+                                                                author, epoch))
             except:
                 log.error("Error while adding feed in db")
 
