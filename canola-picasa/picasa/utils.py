@@ -16,13 +16,15 @@ download_mger = DownloadManager()
 log = logging.getLogger("canola.plugins.images.utils")
 
 
-def download_file(model, path, url, callback_exists=None, callback_downloaded=None, callback_in_progress=None, attr="downloader"):
+def download_file(model, path, url, callback_exists=None, \
+      callback_downloaded=None, callback_in_progress=None, attr="downloader"):
     def download_finished(exception, mimetype):
         if exception is None:
             log.debug("Finished download for %s, calling callback" % path)
             callback_downloaded()
         else:
-            log.error("Error while downloading file %s from %s, error %s" % (path, url, exception))
+            log.error("Error while downloading file %s from %s, error %s" % \
+                                                        (path, url, exception))
 
     def download_in_progress(exception, mimetype):
         if exception is None:

@@ -30,7 +30,8 @@ picasa_manager = PicasaManager()
 
 ModalController = manager.get_class("Controller/Modal")
 PanelContentModal = manager.get_class("Widget/Settings/PanelContentModal")
-UsernamePasswordModal = manager.get_class("Widget/Settings/UsernamePasswordModal")
+UsernamePasswordModal = \
+                    manager.get_class("Widget/Settings/UsernamePasswordModal")
 MixedListController = manager.get_class("Controller/Settings/Folder/MixedList")
 
 log = logging.getLogger("plugins.canola-picasa.options")
@@ -155,7 +156,8 @@ class UserPassController(ModalController):
                 ecore.timer_add(1.5, cb_close)
 
             else:
-                self.view.message("Login error: %s" % picasa_manager.get_login_error() )
+                self.view.message("Login error: %s" % \
+                                            picasa_manager.get_login_error())
                 ecore.timer_add(1.5, cb_close)
 
         self.view.message_wait("Trying to login...")
@@ -237,7 +239,6 @@ class PicasaAddAlbumOptionController(ModalController):
         self.model = model
 
         self.view = NewAlbumModal(parent.last_panel, "Add new album")
-
         self.view.callback_ok_clicked = self._on_ok_clicked
         self.view.callback_cancel_clicked = self.close
         self.view.callback_escape = self.close
@@ -260,7 +261,8 @@ class PicasaAddAlbumOptionController(ModalController):
 
 
         AlbumModelFolder = self.parent.screen_controller.model
-        status = AlbumModelFolder.create_album(self.view.name, self.view.description)
+        status = AlbumModelFolder.create_album(self.view.name, \
+                                                    self.view.description)
         if not status:
             self.view.message_wait("Failed to add new album")
             ecore.timer_add(2, cb_close)
@@ -278,7 +280,8 @@ class PhotocastSyncController(MixedListController):
     terra_type = "Controller/Options/Folder/Image/Picasa/Album/Photocast"
 
 class PhotocastRefreshController(ModalController):
-    terra_type = "Controller/Options/Folder/Image/Picasa/Album/Photocast/Refresh"
+    terra_type = \
+            "Controller/Options/Folder/Image/Picasa/Album/Photocast/Refresh"
 
     def __init__(self, model, canvas, parent):
         ModalController.__init__(self, model, canvas, parent)

@@ -24,7 +24,8 @@ import evas.decorators
 import edje
 import edje.decorators
 
-from efl_utils.animations import DecelerateTimelineAnimation as TimelineAnimation
+from efl_utils.animations import DecelerateTimelineAnimation as \
+                                                    TimelineAnimation
 
 from terra.core.manager import Manager
 from terra.ui.grid import CellRenderer
@@ -516,7 +517,8 @@ class ImageFrameInternal(ImageFrameWidget):
             self.image_set(self.model.path)
             self.update()
 
-        download_file( self.model, self.model.path, self.model.url, down_finish_cb, down_finish_cb, down_finish_cb)
+        download_file( self.model, self.model.path, self.model.url, \
+                                down_finish_cb, down_finish_cb, down_finish_cb)
 
     def update(self):
         self.part_text_set("details", self.model.name)
@@ -843,9 +845,11 @@ class ImageFullScreen(Screen, TerraObject):
 
     def image_prev_next_preload(self, prev, next):
         if prev:
-            download_file(prev, prev.path, prev.url, self.prev_image.preload, self.prev_image.preload, self.prev_image.preload)
+            download_file(prev, prev.path, prev.url, self.prev_image.preload,\
+                            self.prev_image.preload, self.prev_image.preload)
         if next:
-            download_file(next, next.path, next.url, self.next_image.preload, self.next_image.preload, self.next_image.preload)
+            download_file(next, next.path, next.url, self.next_image.preload,\
+                            self.next_image.preload, self.next_image.preload)
 
     def image_current_get(self):
         return self.image_frame_cur.image
@@ -858,7 +862,8 @@ class ImageFullScreen(Screen, TerraObject):
         def down_finish_cb():
             self.image_frame_new.image_set(model, end_callback)
 
-        download_file( model, model.path, model.url, down_finish_cb, down_finish_cb, down_finish_cb)
+        download_file( model, model.path, model.url, down_finish_cb, \
+                                        down_finish_cb, down_finish_cb)
 
     def show_image(self, slideshow=False):
         if slideshow:
@@ -1058,7 +1063,7 @@ class ImageFullScreen(Screen, TerraObject):
         self.callback_prev()
 
     @edje.decorators.signal_callback("action,clicked",
-                                     "fullscreen/controls_right:play_pause,toggle")
+                    "fullscreen/controls_right:play_pause,toggle")
     def cb_play_pause(self, emission, source):
         self.callback_play_pause_toggle()
 
