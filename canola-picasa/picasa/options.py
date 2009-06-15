@@ -122,8 +122,8 @@ class UserPassController(ModalController):
                                           vborder=50)
 
         picasa_manager.reload_prefs()
-        self.view.username = picasa_manager.getUser()
-        self.view.password = picasa_manager.getPassword()
+        self.view.username = picasa_manager.user
+        self.view.password = picasa_manager.password
 
         self.view.callback_ok_clicked = self._on_ok_clicked
         self.view.callback_cancel_clicked = self.close
@@ -140,8 +140,8 @@ class UserPassController(ModalController):
         if not self.view.username or not self.view.password:
             return
 
-        picasa_manager.setUser(self.view.username)
-        picasa_manager.setPassword(self.view.password)
+        picasa_manager.user = self.view.username
+        picasa_manager.password = self.view.password
         def refresh(session):
             session.login()
 
@@ -151,7 +151,7 @@ class UserPassController(ModalController):
                 self.parent.killall()
 
             if picasa_manager.is_logged():
-                self.model.title = "Logged as %s" % picasa_manager.getUser()
+                self.model.title = "Logged as %s" % picasa_manager.user
                 self.view.message("Login successful")
                 ecore.timer_add(1.5, cb_close)
 

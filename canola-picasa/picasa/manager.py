@@ -30,8 +30,8 @@ class PicasaManager(Singleton):
         self.gd_client.source = 'Picasa plugin for Canola'
         self.logged = False
         self.login_error = ''
-        self.user = ''
-        self.password = ''
+        self._user = ''
+        self._password = ''
         self.albums =''
         self.outside_terra = False;
         try:
@@ -43,8 +43,8 @@ class PicasaManager(Singleton):
 
 
     def reload_prefs(self):
-        self.setUser( self.get_preference("username", ""))
-        self.setPassword ( self.get_preference("password", "") )
+        self.user = self.get_preference("username", "")
+        self.password = self.get_preference("password", "")
 
     def get_preference(self, name, default=None):
         return self.prefs.get(name, default)
@@ -53,7 +53,8 @@ class PicasaManager(Singleton):
         try:
             path = self.prefs["thumbs_path"]
         except KeyError:
-            path = os.path.join( os.path.expanduser("~"), ".canola", "picasa", "thumbs")
+            path = os.path.join( os.path.expanduser("~"), ".canola", \
+                                                    "picasa", "thumbs")
             self.prefs["thumbs_path"] = path
             self.prefs.save()
         if not os.path.exists(path):
@@ -64,21 +65,25 @@ class PicasaManager(Singleton):
         self.prefs[name] = value
         self.prefs.save()
 
+    def getPassword(self):
+        return self._password
+
     def setPassword(self, password):
-        self.password = self.gd_client.password = password
+        self._password = self.gd_client.password = password
         if not self.outside_terra:
             self.set_preference("password", password)
 
+    password = property(getPassword, setPassword)
+
+    def getUser(self):
+        return self._user
+
     def setUser(self, email):
-        self.user = self.gd_client.email = email
+        self._user = self.gd_client.email = email
         if not self.outside_terra:
             self.set_preference("username", email)
 
-    def getUser(self):
-        return self.user
-
-    def getPassword(self):
-        return self.password
+    user = property(getUser, setUser)
 
     def login(self):
         if not self.outside_terra:
@@ -111,7 +116,6 @@ class PicasaManager(Singleton):
         except:
             return None
 
-
     def delete_album(self, id):
         albums = self.get_user_albums()
         album = None
@@ -128,19 +132,19 @@ class PicasaManager(Singleton):
 
         return ret
 
-
     def get_photos_from_album(self, album_id, user = None) :
         if not user:
-            user = self.getUser()
-        return self.gd_client.GetFeed('/data/feed/api/user/%s/albumid/%s?kind=photo' % (user , album_id) )
-
+            user = self.user
+        return \
+          self.gd_client.GetFeed('/data/feed/api/user/%s/albumid/%s?kind=photo'\
+                                                        % (user , album_id) )
     def get_login_error(self):
         return self.login_error
 
 if __name__ == "__main__":
     p=PicasaManager()
-    p.setUser('canolapicasa')
-    p.setPassword('1234abcd')
+    p.user = 'canolapicasa'
+    p.password = '1234abcd'
     p.login()
     print p.is_logged()
 

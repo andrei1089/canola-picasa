@@ -251,13 +251,13 @@ class AlbumModelFolder(ServiceModelFolder):
         self.parse_entry_list(self.albums)
 
     def options_model_get(self, controller):
-        return PicasaAlbumOptionModel( None, controller )
+        return PicasaAlbumOptionModel(None, controller)
 
     def create_album(self, name, desc):
         album = picasa_manager.create_album(name, desc)
 
         #TODO: find a better way for this
-        picasa_manager.refresh_user_albums( picasa_manager.getUser() )
+        picasa_manager.refresh_user_albums(picasa_manager.user)
 
         if album is not None:
             self._create_model_from_entry(album)
@@ -508,7 +508,7 @@ class PhotocastSyncModel(ModelFolder):
     def _remove_albums(self):
         cur = db.get_cursor()
 
-        self.select_cond = r" WHERE uri LIKE '%" + picasa_manager.getUser() + \
+        self.select_cond = r" WHERE uri LIKE '%" + picasa_manager.user + \
                                             r"%' AND title LIKE '%[PICASA]%'"
         self.query = self.stmt_delete + self.select_cond
         cur.execute(self.query)
