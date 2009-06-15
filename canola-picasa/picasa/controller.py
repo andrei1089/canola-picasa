@@ -28,7 +28,8 @@ from terra.core.threaded_func import ThreadedFunction
 #TODO: remove this after removing ImageFullscreenController
 from terra.core.model import ModelFolder
 from terra.core.plugin_prefs import PluginPrefs
-from efl_utils.animations import DecelerateTimelineAnimation as TimelineAnimation
+from efl_utils.animations import DecelerateTimelineAnimation \
+                                        as TimelineAnimation
 mouse_move_threshold = 200
 
 
@@ -136,7 +137,7 @@ class GeneralRowRenderer(PluginThemeMixin, BaseRowRenderer):
             self.delete_button.signal_emit("unblock,events", "")
             self.delete_button.state_set(ActionButton.STATE_TRASH)
 
-        self.delete_button.signal_callback_add("contents_box,collapsed", "",
+        self.delete_button.signal_callback_add("contents_box,collapsed", "",\
                                                cb_collapsed)
 
     def cb_load_thumbnail(self):
@@ -144,7 +145,8 @@ class GeneralRowRenderer(PluginThemeMixin, BaseRowRenderer):
             self.image.file_set(self._model.prop["thumb_local"])
             self.signal_emit("thumb,show", "")
         except Exception, e:
-            log.error("could not load image %r: %s", self._model.prop["thumb_local"], e)
+            log.error("could not load image %r: %s", \
+                                self._model.prop["thumb_local"], e)
             self.signal_emit("thumb,hide", "")
 
     def value_set(self, model):
@@ -156,8 +158,9 @@ class GeneralRowRenderer(PluginThemeMixin, BaseRowRenderer):
         self.part_text_set("album_title", model.prop["album_title"])
         self.part_text_set("album_date", "Date:" + model.prop["date"])
         self.part_text_set("album_description", model.prop["description"])
-        self.part_text_set("album_cnt_photos", "Photos: "+ model.prop["cntPhotos"] )
-        self.part_text_set("album_access", model.prop["access"].capitalize() )
+        self.part_text_set("album_cnt_photos", "Photos: " + \
+                                                    model.prop["cntPhotos"])
+        self.part_text_set("album_access", model.prop["access"].capitalize())
         #TODO: do not modify thumb's l/h ratio
         model.request_thumbnail(self.cb_load_thumbnail)
 
@@ -165,7 +168,6 @@ class GeneralRowRenderer(PluginThemeMixin, BaseRowRenderer):
     def __on_delete(self):
         """Free internal data on delete."""
         self.image.delete()
-        #self.rating_area.delete()
         self.bg_selection.delete()
         self.delete_button.delete()
 
@@ -273,7 +275,8 @@ class AlbumController(Controller):
             model.thumb_path = model.thumb_save_path
             callback(model)
 
-        download_file(model, model.thumb_save_path, model.thumb_url, file_exists_cb, down_finished_cb, attr="downloader_thumb")
+        download_file(model, model.thumb_save_path, model.thumb_url, \
+                file_exists_cb, down_finished_cb, attr="downloader_thumb")
 
         return None, None
 
@@ -402,7 +405,8 @@ class ImageInternalController(Controller):
         self.view.callback_mouse_move = self._mouse_move_cb
         self.view.callback_mouse_up = self.cb_on_mouse_up
 
-        self.view.callback_transition_in_finished = self.cb_on_transition_in_finished
+        self.view.callback_transition_in_finished = \
+                                        self.cb_on_transition_in_finished
         self.view.callback_transition_from = self.cb_on_transition_from
 
     def cb_on_transition_from(self):
@@ -465,7 +469,8 @@ class ImageInternalController(Controller):
         self.view.show()
 
     def _setup_image_frame(self, image_frame, model_item):
-        image_frame.callback_show_image_finished = self.cb_on_show_image_finished
+        image_frame.callback_show_image_finished = \
+                                            self.cb_on_show_image_finished
 
         image_frame.model_set(model_item)
         image_frame.resize_for_image_size(model_item.width, model_item.height)
