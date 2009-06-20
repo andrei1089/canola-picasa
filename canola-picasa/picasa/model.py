@@ -175,6 +175,8 @@ class AlbumModel(ModelFolder):
         log.debug("deleting album with id: %s, operation result: %s" % \
                                             (self.prop["album_id"], action))
 
+    def options_model_get(self, controller):
+        return PicasaAlbumModelOption(self, controller)
 
 class ServiceModelFolder(ModelFolder):
     terra_type = "Model/Folder/Task/Image/Picasa/Service"
@@ -563,6 +565,43 @@ class PicasaAlbumModelFolderOption(OptionsModelFolder):
         PicasaTestOptionModel(self)
         PicasaAddAlbumOptionModel(self)
         PhotocastSyncModel(self)
+
+class ChangeAlbumNameOptionModel(Model):
+    terra_type = "Model/Options/Folder/Image/Picasa/Album/Properties/ChangeName"
+    title = "Change name"
+
+    def __init__(self, parent=None):
+        album_prop = parent.parent.prop
+        self.old_value = album_prop["album_title"]
+
+        Model.__init__(self, self.title, parent)
+
+class ChangeAlbumDescriptionOptionModel(Model):
+    terra_type =\
+        "Model/Options/Folder/Image/Picasa/Album/Properties/ChangeDescription"
+    title = "Change description"
+
+    def __init__(self, parent=None):
+        album_prop = parent.parent.prop
+        self.old_value = album_prop["description"]
+
+        Model.__init__(self, self.title, parent)
+
+class PicasaAlbumModelOption(OptionsModelFolder):
+    terra_type = "Model/Options/Folder/Image/Picasa/Album"
+    title = "Album Options"
+
+    def __init__(self, parent, screen_controller=None):
+        #None parameter instead of parent to avoid updating parent model
+        #(AlbumModel) which causes an error(the controller takes
+        #PicasaAlbumModelOption as an ImageModel(tries to get it's width)
+        OptionsModelFolder.__init__(self, None, screen_controller)
+        self.parent = parent
+
+    def do_load(self):
+        PicasaTestOptionModel(self)
+        ChangeAlbumNameOptionModel(self)
+        ChangeAlbumDescriptionOptionModel(self)
 
 class FullScreenUploadOptions(OptionsModelFolder):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload"

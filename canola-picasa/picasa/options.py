@@ -22,6 +22,7 @@ from terra.core.manager import Manager
 from terra.core.threaded_func import ThreadedFunction
 from terra.ui.modal import Modal
 from terra.ui.throbber import EtkThrobber
+from terra.ui.panel import PanelContentFrame
 
 from manager import PicasaManager
 
@@ -310,5 +311,101 @@ class PhotocastRefreshController(ModalController):
 
     def update_text(self):
         self.view.throbber.text_set(self.model.message_text)
+
+
+class AlbumOptionsEditView(Modal):
+    def __init__(self, parent, title, old_value, theme=None):
+        Modal.__init__(self, parent.view, title, theme,
+                       hborder=16, vborder=100)
+
+        self.callback_ok_clicked = None
+        self.callback_cancel_clicked = None
+        self.callback_escape = None
+
+        label = etk.Label("New value:")
+        label.alignment_set(0.0, 1.0)
+        label.show()
+
+        self.entry = etk.Entry(text=old_value)
+        self.entry.on_text_activated(self._on_ok_clicked)
+        self.entry.show()
+
+        vbox = etk.VBox()
+        vbox.border_width_set(25)
+        vbox.append(label, etk.VBox.START, etk.VBox.FILL, 0)
+        vbox.append(self.entry, etk.VBox.START, etk.VBox.FILL, 10)
+        vbox.show()
+
+        self.modal_contents = PanelContentFrame(self.evas)
+        self.modal_contents.frame.add(vbox)
+        self.ok_button = self.modal_contents.button_add("OK")
+        self.ok_button.on_clicked(self._on_button_clicked)
+        self.cancel_button = self.modal_contents.button_add("  Cancel  ")
+        self.cancel_button.on_clicked(self._on_button_clicked)
+
+        self.modal_contents.handle_key_down = self.handle_key_down
+        self.contents_set(self.modal_contents.object)
+
+    def handle_key_down(self, ev):
+        if ev.key == "Escape":
+            if self.callback_escape:
+                self.callback_escape()
+            return False
+        return True
+
+    def _on_ok_clicked(self, *ignored):
+        if self.callback_ok_clicked:
+            self.callback_ok_clicked(self.entry.text)
+
+    def _on_button_clicked(self, bt):
+        if bt == self.ok_button:
+            self._on_ok_clicked()
+        elif bt == self.cancel_button:
+            if self.callback_cancel_clicked:
+                self.callback_cancel_clicked()
+
+    def do_on_focus(self):
+        self.modal_contents.object.focus = True
+
+    @evas.decorators.del_callback
+    def _destroy_contents(self):
+        self.modal_contents.destroy()
+
+
+class AlbumOptionsEditController(ModalController):
+    terra_type = "Controller/Options/Folder/Image/Picasa/Album/Properties"
+
+    def __init__(self, model, canvas, parent):
+        ModalController.__init__(self, model, canvas, parent)
+        self.model = model
+        #TODO: pass theme
+        #self.view = AlbumOptionsEditView(parent, model.title, parent.theme)
+        self.view = AlbumOptionsEditView(parent.last_panel, model.title, \
+                                                            model.old_value)
+
+        self.view.callback_ok_clicked = self._on_ok_clicked
+        self.view.callback_cancel_clicked = self.close
+        self.view.callback_escape = self.close
+        self.view.show()
+
+    def close(self):
+        def cb(*ignored):
+            self.back()
+        self.view.hide(end_callback=cb)
+
+    def _on_ok_clicked(self, new_title):
+        #if self.model.title != new_title:
+        #    self.model.title = new_title
+        #    self.model.commit()
+
+        #    # XXX
+        #    self.parent.killall()
+        print "ok clicked"
+        self.close()
+
+    def delete(self):
+        self.view.delete()
+        self.view = None
+        self.model = None
 
 

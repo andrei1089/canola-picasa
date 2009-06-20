@@ -223,7 +223,7 @@ class ServiceController(BaseListController, OptionsControllerMixin):
         return self.model.options_model_get(self)
 
 
-class AlbumController(Controller):
+class AlbumController(Controller, OptionsControllerMixin):
     terra_type = "Controller/Folder/Image/Picasa/Album"
 
     def __init__(self, model, canvas, parent):
@@ -239,6 +239,7 @@ class AlbumController(Controller):
         self.model.changed_callback_add(self._update_ui)
 
         self._check_model_loaded()
+        OptionsControllerMixin.__init__(self)
 
     def do_resume(self):
         if self.model.updated:
@@ -380,6 +381,10 @@ class AlbumController(Controller):
         #TODO:
         print "!delete"
         #self.thumbler.stop()
+
+    def options_model_get(self):
+        return self.model.options_model_get(self)
+
 
 class ImageInternalController(Controller):
     terra_type = "Controller/Image"
@@ -1092,4 +1097,6 @@ class ImageFullscreenController(Controller, OptionsControllerMixin):
 
     def options_model_get(self):
         return ImagesOptionsModelFolder(None, self)
+
+
 
