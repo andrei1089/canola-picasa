@@ -571,10 +571,13 @@ class ChangeAlbumNameOptionModel(Model):
     title = "Change name"
 
     def __init__(self, parent=None):
-        album_prop = parent.parent.prop
-        self.old_value = album_prop["album_title"]
+        self.album_prop = parent.parent.prop
+        self.old_value = self.album_prop["album_title"]
 
         Model.__init__(self, self.title, parent)
+
+    def update_value(self, new_value):
+        picasa_manager.update_title(self.album_prop["album_id"], new_value)
 
 class ChangeAlbumDescriptionOptionModel(Model):
     terra_type =\
@@ -582,10 +585,16 @@ class ChangeAlbumDescriptionOptionModel(Model):
     title = "Change description"
 
     def __init__(self, parent=None):
-        album_prop = parent.parent.prop
-        self.old_value = album_prop["description"]
+        self.album_prop = parent.parent.prop
+        self.old_value = self.album_prop["description"]
 
+        print dir(parent.screen_controller)
+        self.parent = parent
         Model.__init__(self, self.title, parent)
+
+    def update_value(self, new_value):
+        picasa_manager.update_desc(self.album_prop["album_id"], new_value)
+        #TODO: update model
 
 class PicasaAlbumModelOption(OptionsModelFolder):
     terra_type = "Model/Options/Folder/Image/Picasa/Album"

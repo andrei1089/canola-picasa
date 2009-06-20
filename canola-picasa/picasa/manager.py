@@ -116,21 +116,21 @@ class PicasaManager(Singleton):
         except:
             return None
 
-    def delete_album(self, id):
+    def _get_album_from_id(self, id):
         albums = self.get_user_albums()
-        album = None
-        ret = None
         for i in albums.entry:
             if i.gphoto_id.text == id:
-                album = i
-                break
-        if album is None:
-            ret = False
-        else:
-             ret = self.gd_client.Delete(album)
-        self.refresh_user_albums(self.user)
+                return i
+        return None
 
-        return ret
+    def delete_album(self, id):
+        albums = self.get_user_albums()
+        album = self._get_album_from_id(id)
+        if album is not None:
+            ret = self.gd_client.Delete(album)
+            self.refresh_user_albums(self.user)
+            return ret
+        return False
 
     def get_photos_from_album(self, album_id, user = None) :
         if not user:
@@ -140,6 +140,38 @@ class PicasaManager(Singleton):
                                                         % (user , album_id) )
     def get_login_error(self):
         return self.login_error
+
+    def update_title(self, album_id, new_title):
+        album = self._get_album_from_id(album_id)
+        if new_title == album.title.text:
+            return True
+        album.title.text = new_title
+
+        try:
+            updated_album = self.gd_client.Put(album, album.GetEditLink().href,
+                    converter=gdata.photos.AlbumEntryFromString)
+        except:
+            log.error("Error while updating album's title")
+            return False
+
+        self.refresh_user_albums(self.user)
+        return True
+
+    def update_desc(self, album_id, new_desc):
+        album = self._get_album_from_id(album_id)
+        if new_desc == album.summary.text:
+            return True
+        album.summary.text = new_desc
+
+        try:
+            updated_album = self.gd_client.Put(album, album.GetEditLink().href,
+                    converter=gdata.photos.AlbumEntryFromString)
+        except:
+            log.error("Error while updating album's description")
+            return False
+
+        self.refresh_user_albums(self.user)
+        return True
 
 if __name__ == "__main__":
     p=PicasaManager()

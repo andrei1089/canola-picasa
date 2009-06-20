@@ -378,8 +378,6 @@ class AlbumOptionsEditController(ModalController):
     def __init__(self, model, canvas, parent):
         ModalController.__init__(self, model, canvas, parent)
         self.model = model
-        #TODO: pass theme
-        #self.view = AlbumOptionsEditView(parent, model.title, parent.theme)
         self.view = AlbumOptionsEditView(parent.last_panel, model.title, \
                                                             model.old_value)
 
@@ -391,16 +389,11 @@ class AlbumOptionsEditController(ModalController):
     def close(self):
         def cb(*ignored):
             self.back()
+            self.parent.back()
         self.view.hide(end_callback=cb)
 
     def _on_ok_clicked(self, new_title):
-        #if self.model.title != new_title:
-        #    self.model.title = new_title
-        #    self.model.commit()
-
-        #    # XXX
-        #    self.parent.killall()
-        print "ok clicked"
+        self.model.update_value(new_title)
         self.close()
 
     def delete(self):
