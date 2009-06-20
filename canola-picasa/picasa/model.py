@@ -251,7 +251,7 @@ class AlbumModelFolder(ServiceModelFolder):
         self.parse_entry_list(self.albums)
 
     def options_model_get(self, controller):
-        return PicasaAlbumOptionModel(None, controller)
+        return PicasaAlbumModelFolderOption(None, controller)
 
     def create_album(self, name, desc):
         album = picasa_manager.create_album(name, desc)
@@ -555,7 +555,7 @@ class PhotocastSyncModel(ModelFolder):
         PhotocastRefreshModel(self)
 
 
-class PicasaAlbumOptionModel(OptionsModelFolder):
+class PicasaAlbumModelFolderOption(OptionsModelFolder):
     terra_type = "Model/Options/Folder/Image/Picasa"
     title = "Picasa Options"
 
