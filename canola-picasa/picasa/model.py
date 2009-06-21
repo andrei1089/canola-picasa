@@ -611,7 +611,32 @@ class PicasaAlbumModelOption(OptionsModelFolder):
         PicasaTestOptionModel(self)
         ChangeAlbumNameOptionModel(self)
         ChangeAlbumDescriptionOptionModel(self)
+        AlbumAccessModelFolder(self)
 
 class FullScreenUploadOptions(OptionsModelFolder):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload"
     title = "Upload to Picasa"
+
+class AlbumAccessModel(Model):
+    def __init__(self, name, dir, parent=None):
+        Model.__init__(self, name, parent)
+        self.dir = dir
+
+
+class AlbumAccessModelFolder(ModelFolder):
+    terra_type = "Model/Options/Folder/Image/Picasa/Album/Properties/Access"
+    title = "Change access"
+
+    def __init__(self, parent=None):
+        ModelFolder.__init__(self, self.title, parent)
+
+    def do_load(self):
+        #for dir, name in system_props.download_dirs_get():
+        AlbumAccessModel("abcd", "adasda", self)
+
+    def do_unload(self):
+        self.current = None
+        ModelFolder.do_unload(self)
+
+
+

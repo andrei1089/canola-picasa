@@ -21,6 +21,7 @@ rank = 256
 filter_map = Controller/Settings/Folder/InternetMedia/Picasa - OptionsController
              Controller/Settings/Folder/InternetMedia/Picasa/UserPass - UserPassController
              Controller/Options/Folder/Image/Picasa/Album/Properties - AlbumOptionsEditController
+             Controller/Options/Folder/Image/Picasa/Album/Properties/Access - AlbumAccessFolderController
              Controller/Options/Folder/Image/Picasa/Album/AddAlbum - PicasaAddAlbumOptionController
              Controller/Settings/Folder/InternetMedia/Picasa/ClearCache - ClearCacheController
              Controller/Options/Folder/Image/Picasa/Album/Photocast - PhotocastSyncController
