@@ -156,7 +156,7 @@ class GeneralRowRenderer(PluginThemeMixin, BaseRowRenderer):
 
         self._model = model
         self.part_text_set("album_title", model.prop["album_title"])
-        self.part_text_set("album_date", "Date:" + model.prop["date"])
+        self.part_text_set("album_date", "Date: " + model.prop["date"])
         self.part_text_set("album_description", model.prop["description"])
         self.part_text_set("album_cnt_photos", "Photos: " + \
                                                     model.prop["cntPhotos"])
