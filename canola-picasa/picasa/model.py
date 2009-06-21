@@ -52,7 +52,7 @@ class MainModelFolder(ModelFolder, Task):
 
     def __init__(self, parent):
         Task.__init__(self)
-        ModelFolder.__init__(self, "Picasa plugin", parent)
+        ModelFolder.__init__(self, "Picasa", parent)
         self.callback_notify = None
 
     def do_load(self):
