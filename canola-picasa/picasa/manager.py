@@ -110,7 +110,7 @@ class PicasaManager(Singleton):
     def refresh_user_albums(self, user):
         self.albums = self.gd_client.GetUserFeed(user=user)
 
-    def create_album(self, title, description):
+    def create_album(self, title, description=None):
         try:
             return self.gd_client.InsertAlbum(title, description)
         except:
@@ -187,6 +187,17 @@ class PicasaManager(Singleton):
             return False
 
         self.refresh_user_albums(self.user)
+        return True
+
+    def upload_picture(self, path, album, summary=None):
+        album_url = '/data/feed/api/user/default/albumid/%s' % album
+        if summary is None:
+            summary = os.path.basename(path)
+        try:
+            self.gd_client.InsertPhotoSimple(album_url, summary, \
+                summary, path, content_type='image/jpeg')
+        except:
+            return False
         return True
 
 if __name__ == "__main__":

@@ -618,9 +618,45 @@ class PicasaAlbumModelOption(OptionsModelFolder):
         ChangeAlbumDescriptionOptionModel(self)
         AlbumAccessModelFolder(self)
 
+class FullScreenUploadAlbumModel(OptionsActionModel):
+
+    def __init__(self, name, parent=None, album_id=None):
+        self.name = name
+        self.album_id = album_id
+        self.parent = parent
+        OptionsActionModel.__init__(self, parent)
+
+    def upload(self):
+        print "album id = " + str(self.album_id)
+        if not self.album_id:
+            res = picasa_manager.create_album(self.name)
+            if not res:
+                    return False
+            self.album_id = res.gphoto_id.text
+
+        return picasa_manager.upload_picture(self.parent.image_path, self.album_id)
+
+    def execute(self):
+        self.upload()
+
 class FullScreenUploadOptions(OptionsModelFolder):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload"
     title = "Upload to Picasa"
+
+    def do_load(self):
+        print "loading albmus"
+        ImageModelFolder = self.parent.screen_controller.model
+        ImageModel = ImageModelFolder.children[ImageModelFolder.current]
+        self.image_path = ImageModel.path
+
+        if not picasa_manager.is_logged():
+            picasa_manager.login()
+        albums = picasa_manager.get_user_albums()
+
+        FullScreenUploadAlbumModel("New album" , self)
+
+        for i in albums.entry:
+            FullScreenUploadAlbumModel(i.title.text, self, i.gphoto_id.text)
 
 class AlbumAccessModel(Model):
     def __init__(self, name, parent=None):
