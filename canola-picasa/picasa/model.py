@@ -643,6 +643,12 @@ class FullScreenUploadOptions(OptionsModelFolder):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload"
     title = "Upload to Picasa"
 
+    def __init__(self, parent, screen_controller=None):
+        if isinstance(parent.screen_controller.model, AlbumModel):
+            log.debug("picasa model detected!disable the Upload option"
+            return
+        OptionsModelFolder.__init__(self, parent, screen_controller)
+
     def do_load(self):
         print "loading albmus"
         ImageModelFolder = self.parent.screen_controller.model
