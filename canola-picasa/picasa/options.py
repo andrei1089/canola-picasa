@@ -255,21 +255,25 @@ class PicasaAddAlbumOptionController(ModalController):
         def cb_close(*ignored):
             self.close()
 
+        def th_function():
+            AlbumModelFolder = self.parent.screen_controller.model
+
+            return AlbumModelFolder.create_album(self.view.name, \
+                                                        self.view.description)
+        def th_finished(exception, retval):
+           if not retval:
+                self.view.message_wait("Failed to add new album")
+                ecore.timer_add(2, cb_close)
+                return
+           self.close()
+
         if not self.view.name:
             self.view.message_wait("Missing name")
             ecore.timer_add(2, cb_close)
             return
 
-
-        AlbumModelFolder = self.parent.screen_controller.model
-        status = AlbumModelFolder.create_album(self.view.name, \
-                                                    self.view.description)
-        if not status:
-            self.view.message_wait("Failed to add new album")
-            ecore.timer_add(2, cb_close)
-            return
-        self.close();
-
+        self.view.message_wait("please wait")
+        ThreadedFunction(th_finished, th_function).start()
 
     def delete(self):
         self.view.delete()
