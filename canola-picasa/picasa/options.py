@@ -406,7 +406,7 @@ CheckListPanel = manager.get_class("Widget/CheckListPanel")
 CheckListRenderer = manager.get_class("Widget/CheckListRenderer")
 PanelButtonWidget = manager.get_class("Widget/PanelButton")
 
-class DownloadFolderItemRenderer(CheckListRenderer):
+class AlbumAccessItemRenderer(CheckListRenderer):
     def _is_selected(self, v):
         parent = v.parent
         return parent.current is not None and \
@@ -416,9 +416,9 @@ class DownloadFolderItemRenderer(CheckListRenderer):
 class AlbumAccessPanel(CheckListPanel):
     def __init__(self, main_window, title, elements, theme=None):
         header_text = \
-            "Choose the folder where you want to store your downloads:"
+                "Choose the the level of access for your album:"
         CheckListPanel.__init__(self, main_window, title, elements,
-                                DownloadFolderItemRenderer,
+                                AlbumAccessItemRenderer,
                                 theme=theme, header_text=header_text)
         self.callback_ok = None
         self._setup_buttons()
@@ -438,33 +438,21 @@ class AlbumAccessFolderController(CheckListPanelController):
     terra_type = "Controller/Options/Folder/Image/Picasa/Album/Properties/Access"
     def __init__(self, model, canvas, parent):
         CheckListPanelController.__init__(self, model, canvas, parent)
-        print "in controller"
         def mark_selected(*args, **kargs):
-            settings = PluginPrefs("settings")
-            dpath = settings.get('download_path', None)
-            if dpath is None:
-                return False
-
-            dpath = os.path.realpath(dpath)
             for i, m in enumerate(self.model.children):
-                if dpath == m.dir:
+                if m.selected:
                     self.model.current = i
                     break
-
-            #if self.model.current is None:
-            #    DownloadFolderModel(dpath, dpath, self.model)
-            #    self.model.current = len(self.model.children) - 1
 
             self.view.redraw_item(self.model.current)
             return False
 
         ecore.idler_add(mark_selected)
 
-
     def _setup_view(self):
         title = self.model.name
-        self.view = DownloadFolderPanel(self.parent.window, title,
-                                        self.model.children)
+        self.view = AlbumAccessPanel(self.parent.window, title,\
+                                            self.model.children)
         self.view.callback_clicked = self.cb_on_clicked
         self.view.callback_escape = self.back
         self.view.callback_ok = self.cb_on_ok
@@ -477,12 +465,7 @@ class AlbumAccessFolderController(CheckListPanelController):
             self.view.redraw_item(old_index)
         self.view.redraw_item(index)
 
-    def _save_selected(self):
-        model = self.model.children[self.model.current]
-        settings = PluginPrefs("settings")
-        settings['download_path'] = model.dir
-        settings.save()
-
     def cb_on_ok(self):
-        self._save_selected()
+        new_access = self.model.children[self.model.current].name
+        self.model.update(new_access)
         self.back()

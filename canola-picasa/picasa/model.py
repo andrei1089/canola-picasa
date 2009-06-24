@@ -572,12 +572,17 @@ class ChangeAlbumNameOptionModel(Model):
 
     def __init__(self, parent=None):
         self.album_prop = parent.parent.prop
+        self.album_model = parent.parent
+
         self.old_value = self.album_prop["album_title"]
 
         Model.__init__(self, self.title, parent)
 
     def update_value(self, new_value):
         picasa_manager.update_title(self.album_prop["album_id"], new_value)
+        self.album_prop["album_title"] = new_value
+        #TODO: update model
+        self.album_model.notify_model_changed()
 
 class ChangeAlbumDescriptionOptionModel(Model):
     terra_type =\
@@ -586,15 +591,16 @@ class ChangeAlbumDescriptionOptionModel(Model):
 
     def __init__(self, parent=None):
         self.album_prop = parent.parent.prop
+        self.album_model = parent.parent
         self.old_value = self.album_prop["description"]
 
-        print dir(parent.screen_controller)
-        self.parent = parent
         Model.__init__(self, self.title, parent)
 
     def update_value(self, new_value):
         picasa_manager.update_desc(self.album_prop["album_id"], new_value)
+        self.album_prop["description"] = new_value
         #TODO: update model
+
 
 class PicasaAlbumModelOption(OptionsModelFolder):
     terra_type = "Model/Options/Folder/Image/Picasa/Album"
@@ -608,7 +614,6 @@ class PicasaAlbumModelOption(OptionsModelFolder):
         self.parent = parent
 
     def do_load(self):
-        PicasaTestOptionModel(self)
         ChangeAlbumNameOptionModel(self)
         ChangeAlbumDescriptionOptionModel(self)
         AlbumAccessModelFolder(self)
@@ -618,10 +623,13 @@ class FullScreenUploadOptions(OptionsModelFolder):
     title = "Upload to Picasa"
 
 class AlbumAccessModel(Model):
-    def __init__(self, name, dir, parent=None):
+    def __init__(self, name, parent=None):
         Model.__init__(self, name, parent)
-        self.dir = dir
+        self.name = name
+        self.selected = False
 
+    def execute(self):
+        print str(self.name) + " clicked"
 
 class AlbumAccessModelFolder(ModelFolder):
     terra_type = "Model/Options/Folder/Image/Picasa/Album/Properties/Access"
@@ -629,14 +637,21 @@ class AlbumAccessModelFolder(ModelFolder):
 
     def __init__(self, parent=None):
         ModelFolder.__init__(self, self.title, parent)
+        self.album_prop = parent.parent.prop
+        self.album_model = parent.parent
 
     def do_load(self):
-        #for dir, name in system_props.download_dirs_get():
-        AlbumAccessModel("abcd", "adasda", self)
+        states = ["public", "private", "protected"]
+        for i in states:
+            child = AlbumAccessModel(i, self)
+            if self.album_prop["access"] == i:
+                child.selected = True
+
+    def update(self, new_access):
+        picasa_manager.update_access(self.album_prop["album_id"], new_access)
+        self.album_prop["access"] = new_access
+        #TODO: update model
 
     def do_unload(self):
         self.current = None
         ModelFolder.do_unload(self)
-
-
-

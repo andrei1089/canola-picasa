@@ -173,6 +173,22 @@ class PicasaManager(Singleton):
         self.refresh_user_albums(self.user)
         return True
 
+    def update_access(self, album_id, new_access):
+        album = self._get_album_from_id(album_id)
+        if new_access == album.access.text:
+            return True
+        album.access.text = new_access
+
+        try:
+            updated_album = self.gd_client.Put(album, album.GetEditLink().href,
+                    converter=gdata.photos.AlbumEntryFromString)
+        except:
+            log.error("Error while updating album's description")
+            return False
+
+        self.refresh_user_albums(self.user)
+        return True
+
 if __name__ == "__main__":
     p=PicasaManager()
     p.user = 'canolapicasa'
