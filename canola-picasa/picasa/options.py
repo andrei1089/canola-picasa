@@ -469,3 +469,40 @@ class AlbumAccessFolderController(CheckListPanelController):
         new_access = self.model.children[self.model.current].name
         self.model.update(new_access)
         self.back()
+
+class FullScreenUploadAlbumController(ModalController):
+    terra_type = "Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload/Submenu"
+
+    def __init__(self, model, canvas, parent):
+        ModalController.__init__(self, model, canvas, parent)
+
+        model.callback_locked = self.start
+        model.callback_unlocked = self.stop
+        model.callback_refresh = self.update_text
+
+        self.view = MessageView(parent.last_panel, "uploading")
+        self.model.execute()
+
+    def start(self):
+        self.view.message(hide_cb=self.stop)
+        self.model.callback_locked = None
+
+    def stop(self):
+        def cb():
+            #TODO: hide options menu - doesn't work now!
+            self.parent.back()
+
+        self.view.hide(cb)
+
+    def update_text(self, text):
+        self.view.throbber.text_set(text)
+
+    def delete(self):
+        self.view.delete()
+        self.view = None
+        self.model.callback_locked = None
+        self.model.callback_unlocked = None
+        self.model.callback_refresh = None
+
+
+

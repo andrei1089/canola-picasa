@@ -619,6 +619,7 @@ class PicasaAlbumModelOption(OptionsModelFolder):
         AlbumAccessModelFolder(self)
 
 class FullScreenUploadAlbumModel(OptionsActionModel):
+    terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload/Submenu"
 
     def __init__(self, name, parent=None, album_id=None):
         self.name = name
@@ -637,7 +638,18 @@ class FullScreenUploadAlbumModel(OptionsActionModel):
         return picasa_manager.upload_picture(self.parent.image_path, self.album_id)
 
     def execute(self):
-        self.upload()
+        def upload_finished(exception, retval):
+            if exception is not None:
+                log.error(exception)
+            if not retval:
+                self.callback_refresh("FAILED!")
+                ecore.timer_add(1, self.callback_unlocked)
+                return
+            self.callback_unlocked()
+
+        self.callback_refresh("uploading")
+        self.callback_locked()
+        ThreadedFunction(upload_finished, self.upload).start()
 
 class FullScreenUploadOptions(OptionsModelFolder):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload"
@@ -645,12 +657,11 @@ class FullScreenUploadOptions(OptionsModelFolder):
 
     def __init__(self, parent, screen_controller=None):
         if isinstance(parent.screen_controller.model, AlbumModel):
-            log.debug("picasa model detected!disable the Upload option"
+            log.debug("picasa model detected!disable the Upload option")
             return
         OptionsModelFolder.__init__(self, parent, screen_controller)
 
     def do_load(self):
-        print "loading albmus"
         ImageModelFolder = self.parent.screen_controller.model
         ImageModel = ImageModelFolder.children[ImageModelFolder.current]
         self.image_path = ImageModel.path
