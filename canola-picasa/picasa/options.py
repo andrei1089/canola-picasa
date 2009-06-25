@@ -382,6 +382,7 @@ class AlbumOptionsEditController(ModalController):
     def __init__(self, model, canvas, parent):
         ModalController.__init__(self, model, canvas, parent)
         self.model = model
+        self.parent = parent
         self.view = AlbumOptionsEditView(parent.last_panel, model.title, \
                                                             model.old_value)
 
@@ -397,8 +398,23 @@ class AlbumOptionsEditController(ModalController):
         self.view.hide(end_callback=cb)
 
     def _on_ok_clicked(self, new_title):
-        self.model.update_value(new_title)
-        self.close()
+        def th_function():
+            return self.model.update_value(new_title)
+
+        def th_finished(exception, retval):
+            def view_close():
+                self.close()
+
+            if not retval:
+                self.view.throbber.text_set("ERROR!")
+                ecore.timer_add(2, view_close)
+                return
+            self.close()
+
+        self.view.hide()
+        self.view = MessageView(self.parent.last_panel, "please wait")
+        self.view.message()
+        ThreadedFunction(th_finished, th_function).start()
 
     def delete(self):
         self.view.delete()
@@ -470,9 +486,19 @@ class AlbumAccessFolderController(CheckListPanelController):
         self.view.redraw_item(index)
 
     def cb_on_ok(self):
-        new_access = self.model.children[self.model.current].name
-        self.model.update(new_access)
-        self.back()
+        def th_function():
+            new_access = self.model.children[self.model.current].name
+            return self.model.update(new_access)
+
+        def th_finished(exception, retval):
+            print "th_finished"
+            self.view_wait.hide()
+            self.view.hide()
+            self.back()
+
+        self.view_wait = MessageView(self.parent.last_panel, "please wait")
+        self.view_wait.message()
+        ThreadedFunction(th_finished, th_function).start()
 
 class FullScreenUploadAlbumController(ModalController):
     terra_type = "Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload/Submenu"
