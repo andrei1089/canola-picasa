@@ -25,15 +25,27 @@
  * permission to convey the resulting work.
  */
 
-
-#define TIMEOUT_HIDE 0.4
-#define TIMEOUT_HOLD 0.5
-
-#define FONT_COLOR 255 255 255 255
-
-#include "images.edc"
-
-collections {
-   #include "default_icon.edc"
-   #include "default_picasa.edc"
+group {
+   name: "icon/main_item/picasa";
+   images.image: "images/ico_picasa_teme04.png" COMP;
+   parts {
+      part {
+         name: "icon";
+         type: IMAGE;
+         mouse_events: 0;
+         description {
+            state: "default" 0.0;
+            rel1 {
+               relative: 0.0 0.0;
+               offset: 0 0;
+            }
+            rel2 {
+               relative: 1.0 1.0;
+               offset: -1 -1;
+            }
+            image.normal: "images/ico_picasa_teme04.png";
+         }
+      }
+   }
 }
+

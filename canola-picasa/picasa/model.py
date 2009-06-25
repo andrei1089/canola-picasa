@@ -42,8 +42,8 @@ log = logging.getLogger("plugins.canola-picasa.model")
 
 class Icon(PluginDefaultIcon):
     terra_type = "Icon/Folder/Task/Image/Picasa"
-    icon = "icon/main_item/photos_local"
-    plugin = "canola-picasa"
+    icon = "icon/main_item/picasa"
+    plugin = "picasa"
 
 
 class MainModelFolder(ModelFolder, Task):
