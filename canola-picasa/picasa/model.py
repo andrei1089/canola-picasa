@@ -84,6 +84,8 @@ class MainModelFolder(ModelFolder, Task):
                 UserAlbumModelFolder("List albums", self)
                 CommunityAlbumModelFolder("Search albums by user", self)
                 CommunitySearchTag("Search by tag", self, None, True)
+                CommunityFeatured("Featured pictures", self, None, True)
+                CommunityLocationName("Search by location name", self, None, True)
 
             if end_callback:
                 end_callback()
@@ -219,6 +221,23 @@ class CommunitySearchTag(AlbumServiceModelFolder):
     def do_search(self):
         print "community do_search"
         return picasa_manager.gd_client.SearchCommunityPhotos(self.dialog_response, limit='30')
+
+class CommunityFeatured(AlbumServiceModelFolder):
+    terra_type = "Model/Folder/Image/Picasa/Service/Album/Featured"
+
+    def do_search(self):
+        return picasa_manager.gd_client.GetFeed("/data/feed/api/featured?max-results=50")
+
+class CommunityLocationName(AlbumServiceModelFolder):
+    terra_type = "Model/Folder/Image/Picasa/Service/Album/LocationName"
+    dialog_title = "Search by location name"
+    dialog_msg = "Enter name:"
+    dialog_response = None
+    show_dialog = True
+
+    def do_search(self):
+        return picasa_manager.gd_client.GetFeed("/data/feed/api/all?max-results=50&l=%s" % self.dialog_response, limit='30')
+
 
 class ServiceModelFolder(ModelFolder):
     terra_type = "Model/Folder/Task/Image/Picasa/Service"
