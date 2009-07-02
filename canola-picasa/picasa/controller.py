@@ -248,7 +248,7 @@ class MainController(BaseListController):
 
         def do_search(ignored, text):
             if text is not None and text != "":
-                model.user = text
+                model.dialog_response = text
                 BaseListController.cb_on_clicked(self, view, index)
             else:
                 self._show_notify(CanolaError("Empty input"))
@@ -267,6 +267,7 @@ class AlbumController(Controller, OptionsControllerMixin):
         Controller.__init__(self, model, canvas, parent)
         self.animating = False
         self.model.load()
+
         self._setup_view()
         self.model.updated = False
 
@@ -364,13 +365,6 @@ class AlbumController(Controller, OptionsControllerMixin):
     def _update_ui(self, model):
         self.view.model_updated()
 
-    def delete(self):
-        self.model.changed_callback_del(self._update_ui)
-        self.view.delete()
-        self.model.unload()
-        self._db.commit()
-        self._db.close()
-
     def back(self):
         if self.animating:
             return
@@ -390,7 +384,6 @@ class AlbumController(Controller, OptionsControllerMixin):
 
         def end(*ignored):
             self.animating = False
-
         self.model.current = index
         self._thumb_request_cancel_all()
         controller = ImageInternalController(self.model, self.view.evas,
@@ -418,6 +411,9 @@ class AlbumController(Controller, OptionsControllerMixin):
         #TODO:
         print "!delete"
         #self.thumbler.stop()
+        self.model.changed_callback_del(self._update_ui)
+        self.view.delete()
+        self.model.unload()
 
     def options_model_get(self):
         return self.model.options_model_get(self)
@@ -434,8 +430,8 @@ class ImageInternalController(Controller):
         self.animating = False
         self.is_in_transition_out = False
         self.update = False
-
         self.model.load()
+ 
         self._create_view()
 
     def _create_view(self):

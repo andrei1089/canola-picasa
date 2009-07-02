@@ -79,9 +79,11 @@ class MainModelFolder(ModelFolder, Task):
             self.login_successful = picasa_manager.is_logged()
             self.login_error = picasa_manager.get_login_error()
 
+            #TODO: show options to view community albums even if the user login failed
             if self.login_successful:
                 UserAlbumModelFolder("List albums", self)
                 CommunityAlbumModelFolder("Search albums by user", self)
+                CommunitySearchTag("Search by tag", self, None, True)
 
             if end_callback:
                 end_callback()
@@ -168,9 +170,9 @@ class AlbumServiceModelFolder(ModelFolder):
                 for pic in retval.entry:
                         ImageModel(pic.title.text, self, pic, self.size)
                         self.size += 1
-
             self.inform_loaded()
 
+        self.size = 0
         self.is_loading = True
         ThreadedFunction(refresh_finished, refresh).start()
 
@@ -207,6 +209,16 @@ class CommunityAlbumModel(AlbumServiceModelFolder):
     def do_search(self):
         return picasa_manager.get_photos_from_album(self.prop["album_id"], self.prop["album_user"]);
 
+class CommunitySearchTag(AlbumServiceModelFolder): 
+    terra_type = "Model/Folder/Image/Picasa/Service/Album/SearchTag"
+    dialog_title = "Search by tag"
+    dialog_msg = "Enter tag:"
+    dialog_response = None
+    show_dialog = True
+
+    def do_search(self):
+        print "community do_search"
+        return picasa_manager.gd_client.SearchCommunityPhotos(self.dialog_response, limit='30')
 
 class ServiceModelFolder(ModelFolder):
     terra_type = "Model/Folder/Task/Image/Picasa/Service"
@@ -277,7 +289,7 @@ class ServiceModelFolder(ModelFolder):
         prop["cntPhotos"] = album.numphotos.text
 
         if self.community:
-            prop["album_user"] = self.user
+            prop["album_user"] = self.dialog_response
             CommunityAlbumModel(album.title.text, self, prop, self.community)
         else:
             UserAlbumModel(album.title.text, self, prop)
@@ -314,13 +326,14 @@ class CommunityAlbumModelFolder(ServiceModelFolder):
 
     def __init__(self, name, parent):
         ServiceModelFolder.__init__(self, name, parent)
-        self.user = None
+        self.dialog_response = None
         self.community = True
 
     def do_search(self):
-        if self.user is not None:
-            self.albums = picasa_manager.get_community_albums(self.user)
+        if self.dialog_response is not None:
+            self.albums = picasa_manager.get_community_albums(self.dialog_response)
             self.parse_entry_list(self.albums)
+
 
 
 ###########################################
@@ -692,7 +705,6 @@ class FullScreenUploadAlbumModel(OptionsActionModel):
         OptionsActionModel.__init__(self, parent)
 
     def upload(self):
-        print "album id = " + str(self.album_id)
         if not self.album_id:
             res = picasa_manager.create_album(self.name)
             if not res:
@@ -720,7 +732,7 @@ class FullScreenUploadOptions(OptionsModelFolder):
     title = "Upload to Picasa"
 
     def __init__(self, parent, screen_controller=None):
-        if isinstance(parent.screen_controller.model, AlbumModel):
+        if isinstance(parent.screen_controller.model, AlbumServiceModelFolder):
             log.debug("picasa model detected!disable the Upload option")
             return
         OptionsModelFolder.__init__(self, parent, screen_controller)
