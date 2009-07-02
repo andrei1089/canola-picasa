@@ -124,12 +124,15 @@ class ImageModel(Model):
 class AlbumModel(ModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Album"
 
-    def __init__(self, name, parent, prop):
+    def __init__(self, name, parent, prop, community):
         self.prop = prop
         self.callback_notify = None
         self.size = 0
+        self.community = community
 
         ModelFolder.__init__(self, name, parent)
+
+
 
     def request_thumbnail(self, end_callback=None):
         def request(*ignored):
@@ -151,9 +154,9 @@ class AlbumModel(ModelFolder):
 
     def threaded_load(self):
         def refresh():
-            try:
+            if self.community:
                 return picasa_manager.get_photos_from_album(self.prop["album_id"], self.prop["album_user"]);
-            except KeyError:
+            else:                
                 return picasa_manager.get_photos_from_album(self.prop["album_id"]);
 
         def refresh_finished(exception, retval):
@@ -175,12 +178,25 @@ class AlbumModel(ModelFolder):
         ThreadedFunction(refresh_finished, refresh).start()
 
     def delete_model(self):
-        action = picasa_manager.delete_album(self.prop["album_id"])
-        log.debug("deleting album with id: %s, operation result: %s" % \
-                                            (self.prop["album_id"], action))
+        if self.community:
+            self.parent.callback_notify(CanolaError("Can't delete community albums"))
+            return False
+        else:
+            action = picasa_manager.delete_album(self.prop["album_id"])
+            log.debug("deleting album with id: %s, operation result: %s" % \
+                                                (self.prop["album_id"], action))
+            #TODO: catch exception
+            return action
 
     def options_model_get(self, controller):
-        return PicasaAlbumModelOption(self, controller)
+        """
+        options to change name, description, access should not appear for 
+        community albums
+        """
+        if not self.community:
+            return PicasaAlbumModelOption(self, controller)
+        else:
+            return None
 
 class ServiceModelFolder(ModelFolder):
     terra_type = "Model/Folder/Task/Image/Picasa/Service"
@@ -212,7 +228,7 @@ class ServiceModelFolder(ModelFolder):
                 return
 
             if exception is not None:
-                msg = "ERROR!"
+                msg = "ERROR!<br>" + str(exception[1])
                 log.error(exception)
 
                 if self.callback_notify:
@@ -253,7 +269,7 @@ class ServiceModelFolder(ModelFolder):
         if self.community:
             prop["album_user"] = self.user
 
-        AlbumModel(album.title.text, self, prop)
+        AlbumModel(album.title.text, self, prop, self.community)
 
 class UserAlbumModelFolder(ServiceModelFolder):
     terra_typef = "Model/Folder/Task/Image/Picasa/Service/UserAlbumModel"
@@ -589,6 +605,9 @@ class PhotocastSyncModel(ModelFolder):
 class PicasaAlbumModelFolderOption(OptionsModelFolder):
     terra_type = "Model/Options/Folder/Image/Picasa"
     title = "Picasa Options"
+
+    def __init__(self, parent, screen_controller=None):
+        OptionsModelFolder.__init__(self, parent, screen_controller)
 
     def do_load(self):
         PicasaTestOptionModel(self)
