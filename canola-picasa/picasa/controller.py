@@ -261,7 +261,7 @@ class MainController(BaseListController):
             BaseListController.cb_on_clicked(self, view, index)
 
 class AlbumController(Controller, OptionsControllerMixin):
-    terra_type = "Controller/Folder/Image/Picasa/Album"
+    terra_type = "Controller/Folder/Image/Picasa/Service/Album"
 
     def __init__(self, model, canvas, parent):
         Controller.__init__(self, model, canvas, parent)

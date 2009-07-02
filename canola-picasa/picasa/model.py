@@ -120,19 +120,16 @@ class ImageModel(Model):
 
         Model.__init__(self, name, parent)
 
+class AlbumServiceModelFolder(ModelFolder):
+    terra_type = "Model/Folder/Image/Picasa/Service/Album"
 
-class AlbumModel(ModelFolder):
-    terra_type = "Model/Folder/Image/Picasa/Album"
-
-    def __init__(self, name, parent, prop, community):
+    def __init__(self, name, parent, prop, community=False):
         self.prop = prop
         self.callback_notify = None
         self.size = 0
         self.community = community
 
         ModelFolder.__init__(self, name, parent)
-
-
 
     def request_thumbnail(self, end_callback=None):
         def request(*ignored):
@@ -149,15 +146,15 @@ class AlbumModel(ModelFolder):
         else:
             ThreadedFunction(request_finished, request).start()
 
+    def do_search(self):
+        raise NotImplemented("Must be implemented by subclass")
+
     def do_load(self):
         self.threaded_load()
 
     def threaded_load(self):
         def refresh():
-            if self.community:
-                return picasa_manager.get_photos_from_album(self.prop["album_id"], self.prop["album_user"]);
-            else:                
-                return picasa_manager.get_photos_from_album(self.prop["album_id"]);
+            return self.do_search()
 
         def refresh_finished(exception, retval):
             #TODO: get specific error
@@ -197,6 +194,19 @@ class AlbumModel(ModelFolder):
             return PicasaAlbumModelOption(self, controller)
         else:
             return None
+
+class UserAlbumModel(AlbumServiceModelFolder):
+    terra_type = "Model/Folder/Image/Picasa/Service/Album/UserAlbum"
+
+    def do_search(self):
+        return picasa_manager.get_photos_from_album(self.prop["album_id"]);
+        
+class CommunityAlbumModel(AlbumServiceModelFolder):
+    terra_type = "Model/Folder/Image/Picasa/Service/Album/CommunityAlbum"
+
+    def do_search(self):
+        return picasa_manager.get_photos_from_album(self.prop["album_id"], self.prop["album_user"]);
+
 
 class ServiceModelFolder(ModelFolder):
     terra_type = "Model/Folder/Task/Image/Picasa/Service"
@@ -268,11 +278,12 @@ class ServiceModelFolder(ModelFolder):
 
         if self.community:
             prop["album_user"] = self.user
-
-        AlbumModel(album.title.text, self, prop, self.community)
+            CommunityAlbumModel(album.title.text, self, prop, self.community)
+        else:
+            UserAlbumModel(album.title.text, self, prop)
 
 class UserAlbumModelFolder(ServiceModelFolder):
-    terra_typef = "Model/Folder/Task/Image/Picasa/Service/UserAlbumModel"
+    terra_type = "Model/Folder/Task/Image/Picasa/Service/UserAlbumModel"
 
     def __init__(self, name, parent):
         ServiceModelFolder.__init__(self, name, parent)
