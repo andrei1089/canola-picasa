@@ -53,6 +53,8 @@ NotifyModel = manager.get_class("Model/Notify")
 OptionsControllerMixin = manager.get_class("OptionsControllerMixin")
 ImagesOptionsModelFolder = manager.get_class("Model/Options/Folder/Image/" \
                                               "Fullscreen")
+EntryDialogModel = manager.get_class("Model/EntryDialog")
+CanolaError = manager.get_class("Model/Notify/Error")
 
 log = logging.getLogger("plugins.canola-picasa.controller")
 
@@ -227,8 +229,37 @@ class ServiceController(BaseListController, OptionsControllerMixin):
         self.parent.show_notify(err)
 
     def options_model_get(self):
-        return self.model.options_model_get(self)
+        try:
+            return self.model.options_model_get(self)
+        except:
+            return None
 
+class MainController(BaseListController):
+    terra_type = "Controller/Folder/Task/Image/Picasa"
+
+    def __init__(self, model, canvas, parent):
+        BaseListController.__init__(self, model, canvas, parent)
+
+    def _show_notify(self, err):
+        """Popup a modal with a notify message."""
+        self.parent.show_notify(err)
+
+    def cb_on_clicked(self, view, index):
+        model = self.model.children[index]
+
+        def do_search(ignored, text):
+            if text is not None and text != "":
+                model.user = text
+                BaseListController.cb_on_clicked(self, view, index)
+            else:
+                self._show_notify(CanolaError("Empty input"))
+        
+        try:
+            if model.show_dialog:
+                dialog = EntryDialogModel(model.dialog_title, model.dialog_msg, answer_callback=do_search)
+                self.parent.show_notify(dialog)
+        except:
+            BaseListController.cb_on_clicked(self, view, index)
 
 class AlbumController(Controller, OptionsControllerMixin):
     terra_type = "Controller/Folder/Image/Picasa/Album"

@@ -80,7 +80,8 @@ class MainModelFolder(ModelFolder, Task):
             self.login_error = picasa_manager.get_login_error()
 
             if self.login_successful:
-                AlbumModelFolder("List albums", self)
+                UserAlbumModelFolder("List albums", self)
+                CommunityAlbumModelFolder("Search albums by user", self)
 
             if end_callback:
                 end_callback()
@@ -150,7 +151,10 @@ class AlbumModel(ModelFolder):
 
     def threaded_load(self):
         def refresh():
-            return picasa_manager.get_photos_from_album(self.prop["album_id"]);
+            try:
+                return picasa_manager.get_photos_from_album(self.prop["album_id"], self.prop["album_user"]);
+            except KeyError:
+                return picasa_manager.get_photos_from_album(self.prop["album_id"]);
 
         def refresh_finished(exception, retval):
             #TODO: get specific error
@@ -180,8 +184,14 @@ class AlbumModel(ModelFolder):
 
 class ServiceModelFolder(ModelFolder):
     terra_type = "Model/Folder/Task/Image/Picasa/Service"
-
     empty_msg = "No albums found"
+
+    """
+    marks whether or not the albums belong to current user or the community, 
+    used to disable some options ( delete, add album, change name etc.. )
+
+    """
+    community = False
 
     def __init__(self, name, parent):
         ModelFolder.__init__(self, name, parent)
@@ -240,12 +250,15 @@ class ServiceModelFolder(ModelFolder):
 
         prop["cntPhotos"] = album.numphotos.text
 
+        if self.community:
+            prop["album_user"] = self.user
+
         AlbumModel(album.title.text, self, prop)
 
-class AlbumModelFolder(ServiceModelFolder):
-    terra_typef = "Model/Folder/Task/Image/Picasa/Service/AlbumModel"
+class UserAlbumModelFolder(ServiceModelFolder):
+    terra_typef = "Model/Folder/Task/Image/Picasa/Service/UserAlbumModel"
 
-    def __init__(self, name,parent):
+    def __init__(self, name, parent):
         ServiceModelFolder.__init__(self, name, parent)
 
     def do_search(self):
@@ -265,6 +278,22 @@ class AlbumModelFolder(ServiceModelFolder):
             self._create_model_from_entry(album)
             return True
         return False
+
+class CommunityAlbumModelFolder(ServiceModelFolder):
+    terra_type = "Model/Folder/Task/Image/Picasa/Service/CommunityAlbumModel"
+    dialog_title = "Community albums"
+    dialog_msg = "Enter user name:"
+    show_dialog = True
+
+    def __init__(self, name, parent):
+        ServiceModelFolder.__init__(self, name, parent)
+        self.user = None
+        self.community = True
+
+    def do_search(self):
+        if self.user is not None:
+            self.albums = picasa_manager.get_community_albums(self.user)
+            self.parse_entry_list(self.albums)
 
 
 ###########################################

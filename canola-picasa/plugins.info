@@ -14,6 +14,7 @@ enabled = True
 rank = 256
 filter_map = Controller/Folder/Task/Image/Picasa/Service - ServiceController
              Controller/Folder/Image/Picasa/Album - AlbumController
+             Controller/Folder/Task/Image/Picasa - MainController
 [Picasa Options]
 modname = picasa.options
 enabled = True
