@@ -69,23 +69,22 @@ class MainModelFolder(ModelFolder, Task):
 
             #TODO:display specific error messages
             if exception is not None or not picasa_manager.is_logged():
-                msg = "ERROR!"
+                msg = "Login error, please check your account details"
                 log.error(exception)
-
-                #why is not workin here???
+                
                 if self.callback_notify:
                     self.callback_notify(CanolaError(msg))
 
             self.login_successful = picasa_manager.is_logged()
             self.login_error = picasa_manager.get_login_error()
 
-            #TODO: show options to view community albums even if the user login failed
             if self.login_successful:
                 UserAlbumModelFolder("My albums", self)
-                CommunityAlbumModelFolder("Search albums by user", self)
-                CommunitySearchTag("Search by tag", self, None, True)
-                CommunityFeatured("Featured pictures", self, None, True)
-                CommunityLocationName("Search by location name", self, None, True)
+
+            CommunityAlbumModelFolder("Search albums by user", self)
+            CommunitySearchTag("Search by tag", self, None, True)
+            CommunityFeatured("Featured pictures", self, None, True)
+            CommunityLocationName("Search by location name", self, None, True)
 
             if end_callback:
                 end_callback()

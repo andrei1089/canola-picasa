@@ -237,6 +237,7 @@ class MainController(BaseListController):
     terra_type = "Controller/Folder/Task/Image/Picasa"
 
     def __init__(self, model, canvas, parent):
+        model.callback_notify = self._show_notify
         BaseListController.__init__(self, model, canvas, parent)
 
     def _show_notify(self, err):
