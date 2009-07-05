@@ -506,13 +506,6 @@ class PicasaAddAlbumOptionModel(MixedListItemDual):
     def on_right_button_clicked(self):
         self.callback_use(self)
 
-class PicasaTestOptionModel(OptionsActionModel):
-
-    name = "Test option"
-
-    def execute(self):
-        print "option clicked"
-
 MixedListItemOnOff = \
                 manager.get_class("Model/Settings/Folder/MixedList/Item/OnOff")
 class PhotocastOnOffModel(MixedListItemOnOff):
@@ -653,7 +646,6 @@ class PicasaAlbumModelFolderOption(OptionsModelFolder):
         OptionsModelFolder.__init__(self, parent, screen_controller)
 
     def do_load(self):
-        PicasaTestOptionModel(self)
         PicasaAddAlbumOptionModel(self)
         PhotocastSyncModel(self)
 
