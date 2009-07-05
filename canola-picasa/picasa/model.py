@@ -81,7 +81,7 @@ class MainModelFolder(ModelFolder, Task):
 
             #TODO: show options to view community albums even if the user login failed
             if self.login_successful:
-                UserAlbumModelFolder("List albums", self)
+                UserAlbumModelFolder("My albums", self)
                 CommunityAlbumModelFolder("Search albums by user", self)
                 CommunitySearchTag("Search by tag", self, None, True)
                 CommunityFeatured("Featured pictures", self, None, True)
@@ -515,7 +515,7 @@ class PhotocastOnOffModel(MixedListItemOnOff):
     def __init__(self, parent=None):
         MixedListItemOnOff.__init__(self, parent)
         self.parent = parent
-        self.title = "Sync Photocast"
+        self.title = "Export albums"
 
     def get_state(self):
         return (self.title, self.parent._state)
