@@ -19,6 +19,10 @@ import edje
 import ecore
 import logging
 import urllib
+
+import thumbnailer
+import epsilon
+
 from time import time
 from manager import PicasaManager
 
@@ -134,16 +138,32 @@ class AlbumServiceModelFolder(ModelFolder):
 
         ModelFolder.__init__(self, name, parent)
 
+        try:
+            self.thumbler = thumbnailer.CanolaThumbnailer()
+        except RuntimeError, e:
+            log.error(e)
+            self.thumbler = None
+
     def request_thumbnail(self, end_callback=None):
         def request(*ignored):
-            urllib.urlretrieve(self.prop["thumb_url"], self.prop["thumb_local"])
+            urllib.urlretrieve(url, path)
 
-        def request_finished(exception, retval):
+        def thumbler_finished_cb(path, thumb_path, w, h):
+            os.rename(thumb_path, path)
             if end_callback:
                 end_callback(self)
+        
+        def request_finished(exception, retval):
+            self.thumbler.request_add(path,
+                                           epsilon.EPSILON_THUMB_CROP,
+                                           epsilon.EPSILON_THUMB_CROP,
+                                           120, 90, 
+                                           thumbler_finished_cb)
 
-        if not self.prop["thumb_url"] or \
-                                os.path.exists(self.prop["thumb_local"]):
+        url = self.prop["thumb_url"]
+        path = self.prop["thumb_local"]
+
+        if not url or os.path.exists(path):
             if end_callback:
                 end_callback(self)
         else:
