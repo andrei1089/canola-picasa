@@ -140,12 +140,12 @@ class AlbumServiceModelFolder(ModelFolder):
 
         def request_finished(exception, retval):
             if end_callback:
-                end_callback()
+                end_callback(self)
 
         if not self.prop["thumb_url"] or \
                                 os.path.exists(self.prop["thumb_local"]):
             if end_callback:
-                end_callback()
+                end_callback(self)
         else:
             ThreadedFunction(request_finished, request).start()
 

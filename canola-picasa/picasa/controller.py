@@ -147,13 +147,13 @@ class GeneralRowRenderer(PluginThemeMixin, BaseRowRenderer):
         self.delete_button.signal_callback_add("contents_box,collapsed", "",\
                                                cb_collapsed)
 
-    def cb_load_thumbnail(self):
+    def cb_load_thumbnail(self, model):
         try:
-            self.image.file_set(self._model.prop["thumb_local"])
+            self.image.file_set(model.prop["thumb_local"])
             self.signal_emit("thumb,show", "")
         except Exception, e:
             log.error("could not load image %r: %s", \
-                                self._model.prop["thumb_local"], e)
+                                model.prop["thumb_local"], e)
             self.signal_emit("thumb,hide", "")
 
     def value_set(self, model):
