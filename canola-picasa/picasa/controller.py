@@ -62,7 +62,6 @@ log = logging.getLogger("plugins.canola-picasa.controller")
 class ActionButton(PluginThemeMixin, GeneralActionButton):
     plugin = "picasa"
 
-
 class GeneralRowRenderer(PluginThemeMixin, BaseRowRenderer):
     """
     This renderer is applied on ServiceController. Providing
@@ -179,7 +178,6 @@ class GeneralRowRenderer(PluginThemeMixin, BaseRowRenderer):
         self.bg_selection.delete()
         self.delete_button.delete()
 
-
 class ResizableRowRendererWidget(GeneralRowRenderer, ResizableRowRenderer):
     """Picasa Base List Item Renderer for Selected Items.
 
@@ -193,29 +191,17 @@ class ResizableRowRendererWidget(GeneralRowRenderer, ResizableRowRenderer):
     def __init__(self, parent, theme=None):
         GeneralRowRenderer.__init__(self, parent, theme)
 
-
 class RowRendererWidget(GeneralRowRenderer):
     row_group="list_item_picasa"
     resizable_row_renderer = ResizableRowRendererWidget
 
-
 class ServiceController(BaseListController, OptionsControllerMixin):
     """Picasa Album List.
 
-    This list is like a page result that shows the videos that match
-    with some criteria.
-
-    @note: This class extends BaseListController, but apply a different
-    item renderer declaring a row_renderer variable and a different
-    screen interface declaring a list_group variable. The group "list_video"
-    is the interface of the default Canola video list.
-
-    @see: BaseListController, RowRendererWidget,
-          SelectedRowRendererWidget
+    This list is like a page result that shows the details for each album. 
     """
     terra_type = "Controller/Folder/Task/Image/Picasa/Service"
     row_renderer = RowRendererWidget
-    list_group = "list_video"
 
     def __init__(self, model, canvas, parent):
         self.empty_msg = model.empty_msg
@@ -300,7 +286,6 @@ class AlbumController(Controller, OptionsControllerMixin):
         self.view = ImageGridScreen(self.evas, self.parent.view, title,
                               self.model.children)
         self.view.callback_create_thumb = self._cb_create_thumb
-        self.view.callback_cancel_thumb = self._thumb_request_cancel
         self.view.callback_clicked = self.cb_on_clicked
 
     def _cb_create_thumb(self, model, callback):
@@ -319,49 +304,6 @@ class AlbumController(Controller, OptionsControllerMixin):
                 file_exists_cb, down_finished_cb, attr="downloader_thumb")
 
         return None, None
-
-
-    def _thumb_request(self, model, callback):
-        if not model:
-            return True
-
-        def _thumb_request_cb(path, thumb_path, w, h):
-            log.debug("Thumbnailer callback called with: %s", path)
-            if thumb_path:
-                model.thumb_path = thumb_path
-                model.thumb_width = w
-                model.thumb_height = h
-                try:
-                    stat_thumb = os.stat(thumb_path)
-                except OSError, e:
-                    return True
-                r = self._db.execute("REPLACE INTO thumbnails VALUES (" \
-                                     "%d, '%s', %d, %d, %d )" % \
-                                     (model.id, thumb_path, w, h,
-                                      stat_thumb.st_mtime))
-                r.close()
-                callback(model)
-            else:
-                log.warning("Could not generate image thumb for %s", \
-                            model.path)
-
-        id = None
-        if self.thumbler:
-            id = self.thumbler.request_add(model.path,
-                                           epsilon.EPSILON_THUMB_NORMAL,
-                                           epsilon.EPSILON_THUMB_CROP,
-                                           128, 128,
-                                           _thumb_request_cb)
-
-        return id, _thumb_request_cb
-
-    def _thumb_request_cancel(self, *args, **kargs):
-        print "thumb request cancel"
-        #self.thumbler.request_cancel(*args)
-
-    def _thumb_request_cancel_all(self, *args, **kargs):
-        print "thumb request cancel all"
-        #self.thumbler.request_cancel_all(*args)
 
     def _update_ui(self, model):
         self.view.model_updated()
@@ -386,7 +328,6 @@ class AlbumController(Controller, OptionsControllerMixin):
         def end(*ignored):
             self.animating = False
         self.model.current = index
-        self._thumb_request_cancel_all()
         controller = ImageInternalController(self.model, self.view.evas,
                                              self.parent)
         self.animating = True
