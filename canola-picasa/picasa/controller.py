@@ -20,6 +20,9 @@ import locale
 import logging
 import os
 
+import epsilon
+import thumbnailer
+
 from terra.core.manager import Manager
 from terra.ui.base import PluginThemeMixin
 from terra.core.controller import Controller
@@ -282,6 +285,12 @@ class AlbumGridController(Controller, OptionsControllerMixin):
 
         self._check_model_loaded()
         OptionsControllerMixin.__init__(self)
+        
+        try:
+            self.thumbler = thumbnailer.CanolaThumbnailer()
+        except RuntimeError, e:
+            log.error(e)
+            self.thumbler = None
 
     def do_resume(self):
         if self.model.updated:
@@ -307,11 +316,19 @@ class AlbumGridController(Controller, OptionsControllerMixin):
 
     def _cb_create_thumb(self, model, callback):
 
-        def down_finished_cb():
-            model.thumb_path = model.thumb_save_path
+        def thumbler_finished_cb(path, thumb_path, w, h):
+            os.rename(thumb_path, path)
+            model.thumb_path = path
             #TODO: find a way to use the callback instead of force_redraw
             self.force_view_redraw()
             #callback(model)
+
+        def down_finished_cb():
+            self.thumbler.request_add(model.thumb_save_path,
+                                           epsilon.EPSILON_THUMB_NORMAL,
+                                           epsilon.EPSILON_THUMB_CROP,
+                                           128, 128,
+                                           thumbler_finished_cb)
 
         def file_exists_cb():
             model.thumb_path = model.thumb_save_path
