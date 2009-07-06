@@ -1,0 +1,29 @@
+/*
+Canola2 Picasa plugin
+Author: Mirestean Andrei < andrei.mirestean at gmail.com >
+Author: Adriano Rezende <adriano.rezende@openbossa.org>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#define TIMEOUT_HIDE 0.4
+#define TIMEOUT_HOLD 0.5
+
+#define FONT_COLOR 255 255 255 255
+
+#include "../default/images.edc"
+
+collections {
+   #include "flatblue_icon.edc"
+   #include "../default/default_picasa.edc"
+}
