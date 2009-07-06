@@ -46,6 +46,7 @@ def download_file(model, path, url, callback_exists=None, \
             #model.downloader = downloader
     else:
         log.debug("file %s was already downloaded" % path)
-        callback_exists()
+        if callback_exists:
+            callback_exists()
     model.__setattr__(attr, downloader)
 

@@ -33,6 +33,7 @@ from terra.ui.base import EdjeWidget
 from terra.ui.base import Widget
 from terra.ui.screen import Screen
 from terra.core.terra_object import TerraObject
+from terra.ui.kinetic import KineticMouse
 
 from utils import *
 
@@ -1067,4 +1068,306 @@ class ImageGridScreen(Screen):
     def force_redraw(self):
         self._grid.force_redraw()
 
+class ImageFrameThumb(ImageFrameWidget):
+    def __init__(self, canvas, parent, theme=None):
+        ImageFrameWidget.__init__(self, canvas,
+                                  "images/thumbnail/image_frame",
+                                  parent, theme)
 
+    def resize_for_image_size(self, w, h):
+        self.image_clear()
+
+        frame_w = max(w, self.size_min[0])
+        frame_h = max(h, self.size_max[1])
+
+        self.image_size_set(w, h)
+        self.size_set(frame_w, frame_h)
+
+    def file_set_cb(self):
+        if not self.model.thumb_path:
+            return
+
+        self.image_set(self.model.thumb_path)
+        self.signal_emit("show,image", "")
+
+    @evas.decorators.del_callback
+    def _cb_on_delete(self):
+        ImageFrameWidget._cb_on_delete(self)
+
+class ImageGridContainer(evas.ClippedSmartObject, Widget):
+    def __init__(self, parent, hpadding=1, vpadding=1,
+                 halign=0.5, valign=0.5, theme=None):
+        Widget.__init__(self, parent, theme)
+        evas.ClippedSmartObject.__init__(self, parent.evas)
+
+        self.hpadding = int(hpadding)
+        self.vpadding = int(vpadding)
+        self._hboxes = []
+
+    def clear_all(self):
+        for hbox in self._hboxes:
+            hbox.delete()
+        self._hboxes = []
+
+    def resize(self, w, h):
+        if self.size == (w, h):
+            return
+
+        x, y = self.pos
+        self._setup_gui(x, y, w, h)
+
+    def rows_set(self, num_rows, w, h):
+        for i in xrange(num_rows):
+            hbox = ImageHBox(self.evas,
+                             hpadding=self.hpadding, valign=0.0)
+            # set fixed height
+            hbox.resize(0, h)
+            self.member_add(hbox)
+            hbox.show()
+            self._hboxes.append(hbox)
+
+    def num_rows_get(self):
+        return len(self._hboxes)
+
+    def row_get(self, row_index):
+        return self._hboxes[row_index].children_get()
+
+    def _setup_gui(self, x, y, w, h):
+        # invoking parent callback because this resize is called first
+        self.parent.callback_resized(x, y, w, h)
+
+        max_row_w, max_h = 0, 0
+        for i, hbox in enumerate(self._hboxes):
+            max_h = max(max_h, hbox.size[1])
+            max_row_w = max(max_row_w, self.parent.row_widths[i])
+
+        for i, hbox in enumerate(self._hboxes):
+            # offset to centralize rows
+            if hbox.size[0] > w:
+                offset_x = (max_row_w - self.parent.row_widths[i]) / 2
+            else:
+                offset_x = 0
+            hbox.move(x + offset_x, y)
+            y += max_h + self.vpadding
+
+    def child_get(self, row, index):
+        return self._hboxes[row]._children[index]
+
+    def append(self, row, obj):
+        self._hboxes[row].append(obj)
+
+    def prepend(self, row, obj):
+        self._hboxes[row].prepend(obj)
+
+    def remove(self, row, obj):
+        self._hboxes[row].remove(obj)
+
+    def object_at_xy(self, x, y):
+        for hbox in self._hboxes:
+            if hbox.rect.contains_point(hbox.pos[0], y):
+                for c in hbox._children:
+                    if c.rect.contains_point(x, y):
+                        return c
+
+    def children_move_relative(self, x, y):
+        for hbox in self._hboxes:
+            hbox.move_relative(x, y)
+
+    def children_leftmost_x(self):
+        left_x = 999999
+        for hbox in self._hboxes:
+            if hbox.pos[0] < left_x:
+                left_x = hbox.pos[0]
+        return left_x
+
+    def children_rightmost_x(self):
+        right_x = 0
+        for hbox in self._hboxes:
+            if hbox.top_right[0] > right_x:
+                right_x = hbox.top_right[0]
+        return right_x
+
+    def children_min_right_get(self):
+        min_row_right_x = 999999
+        min_row_right = None
+
+        for hbox in self._hboxes:
+            if hbox.top_right[0] < min_row_right_x:
+                min_row_right_x = hbox.top_right[0]
+                min_row_right = hbox
+
+        return min_row_right
+
+    def children_max_left_get(self):
+        max_row_left_x  = -999999
+        max_row_left = None
+
+        for hbox in self._hboxes:
+            if hbox.pos[0] > max_row_left_x:
+                max_row_left_x = hbox.pos[0]
+                max_row_left = hbox
+
+        return max_row_left
+
+    def theme_changed(self):
+        for hbox in self._hboxes:
+            for c in hbox.children_get():
+                c.theme_changed()
+
+
+class ImageThumbScreen(Screen):
+    view_name = "images_thumb"
+
+    click_constant = 20
+    speed_threshold = 1000
+
+    def __init__(self, canvas, main_window, title="Photos",
+                 elements=None, theme=None):
+        Screen.__init__(self, canvas, "images/thumbnail",
+                        main_window, title, theme)
+
+        self._setup_gui()
+
+        self.elements = elements
+
+        self.throbber = self.part_swallow_get("throbber")
+
+        self.row_widths = []
+
+        self.over_speed = False
+
+        self.kinetic = KineticMouse(self._move_offset)
+        self.is_dragging = False
+        self.mouse_down_pos = None
+
+        self.callback_block_load = None
+        self.callback_resume_load = None
+
+        self.callback_transition_in_finished = None
+
+        self.callback_clicked = None
+        self.callback_move_offset = None
+        # the resize callback is triggered in ImageGridContainer's _setup_gui
+        self.callback_resized = None
+        self.callback_on_theme_changed = None
+
+    def ImageFrameThumb(self, theme=None):
+        return ImageFrameThumb(self.evas, self, theme)
+
+    def theme_changed(self):
+        Screen.theme_changed(self)
+        self.image_grid.theme_changed()
+        self._setup_click_area()
+        self.callback_on_theme_changed()
+
+    def loaded(self):
+        self._check_has_elements()
+        self.throbber_stop()
+
+    def _check_has_elements(self):
+        if self.elements:
+            self.signal_emit("message,hide", "")
+        else:
+            self.part_text_set("message", "No items found.")
+            self.signal_emit("message,show", "")
+
+    def throbber_start(self):
+        self.throbber.signal_emit("throbber,start", "")
+
+    def throbber_stop(self):
+        self.throbber.signal_emit("throbber,stop", "")
+
+    def _setup_gui(self):
+        self.image_grid = ImageGridContainer(self,
+                                             hpadding=20, vpadding=20)
+
+        self.part_swallow("contents", self.image_grid)
+        self._setup_click_area()
+
+    def _setup_click_area(self):
+        self.click_area = self.part_object_get("click_area")
+        self.click_area.on_mouse_down_add(self._cb_on_mouse_down)
+        self.click_area.on_mouse_up_add(self._cb_on_mouse_up)
+        self.click_area.on_mouse_move_add(self._cb_on_mouse_move)
+
+    def clear_all(self):
+        self.image_grid.clear_all()
+
+    def _check_speed(self, keep_moving):
+        if not keep_moving:
+            if self.over_speed:
+                log.debug("resume load callback")
+                if self.callback_resume_load:
+                    self.callback_resume_load()
+            self.over_speed = False
+            return
+
+        if self.kinetic.animation:
+            speed = abs(self.kinetic.anim_speed)
+            log.debug("abs vel = %s", speed)
+
+            if not self.over_speed and (speed > self.speed_threshold):
+                log.debug("hold file sets")
+                if self.callback_block_load:
+                    self.callback_block_load()
+                self.over_speed = True
+
+    def _move_offset(self, offset):
+        if not self.callback_move_offset:
+            return False
+
+        keep_moving = self.callback_move_offset(offset)
+        self._check_speed(keep_moving)
+
+        return keep_moving
+
+    def _emit_clicked(self, x, y):
+        obj = self.image_grid.object_at_xy(x, y)
+        if obj:
+            self.callback_clicked(obj)
+
+    def _is_click_possible(self, x):
+        if self.is_dragging or self.mouse_down_pos is None:
+            return False
+        else:
+            return abs(x - self.mouse_down_pos) <= self.click_constant
+
+    def _cb_on_mouse_up(self, obj, event):
+        if not event.button == 1:
+            return
+
+        x, y = event.position.canvas
+
+        if self._is_click_possible(x):
+            self._emit_clicked(x, y)
+            self.kinetic.mouse_cancel()
+        else:
+            self.kinetic.mouse_up(x)
+
+    def _cb_on_mouse_down(self, obj, event):
+        if not event.button == 1:
+            return
+
+        x, y = event.position.canvas
+
+        self.mouse_down_pos = x
+        self.is_dragging = not self.kinetic.mouse_down(x)
+
+    def _cb_on_mouse_move(self, obj, event):
+        if not event.buttons == 1:
+            return
+
+        x, y = event.position.canvas
+
+        if not self._is_click_possible(x):
+            self.is_dragging = True
+
+        self.kinetic.mouse_move(x)
+
+    @edje.decorators.signal_callback("transition,in,finished", "")
+    def cb_transition_in_finished(self, emission, source):
+        self.callback_transition_in_finished()
+
+    @evas.decorators.del_callback
+    def _cb_on_delete(self):
+        self.image_grid.delete()

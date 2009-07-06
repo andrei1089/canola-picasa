@@ -112,14 +112,14 @@ class ImageModel(Model):
         self.path = picasa_manager.get_thumbs_path() + "/" + \
                                                         str(self.id) + ".jpg"
         self.url = image.media.content[0].url
-        self.width = image.media.content[0].width
-        self.height = image.media.content[0].height
+        self.width = float(image.media.content[0].width)
+        self.height = float(image.media.content[0].height)
 
         self.downloader = None
         self.downloader_thumb = None
 
-        self.width = self.thumb_width
-        self.height = self.thumb_height
+        #self.width = self.thumb_width
+        #self.height = self.thumb_height
 
         Model.__init__(self, name, parent)
 
@@ -176,6 +176,7 @@ class AlbumServiceModelFolder(ModelFolder):
         self.size = 0
         self.is_loading = True
         ThreadedFunction(refresh_finished, refresh).start()
+        #refresh_finished(None, self.do_search())
 
     def delete_model(self):
         if self.community:

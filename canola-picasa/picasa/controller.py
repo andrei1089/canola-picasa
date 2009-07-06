@@ -13,7 +13,7 @@
 #
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import math
 import evas
 import ecore
 import locale
@@ -36,7 +36,7 @@ mouse_move_threshold = 200
 from ui import ImageGridScreen
 from ui import ImageInternalScreen
 from ui import ImageFullScreen
-
+from ui import ImageThumbScreen
 from utils import *
 
 manager = Manager()
@@ -247,12 +247,29 @@ class MainController(BaseListController):
         except:
             BaseListController.cb_on_clicked(self, view, index)
 
-class AlbumController(Controller, OptionsControllerMixin):
+class AlbumController(Controller):
+    terra_type = "Controller/Folder/Image/Picasa/Service/Album"
+
+    def __new__(cls, *args, **kargs):
+        s = PluginPrefs("settings")
+        try:
+            value = s["alternative_thumb_screen"]
+        except:
+            value = False
+        if value:
+            obj = Controller.__new__(AlbumGridController, *args, **kargs)
+        else:
+            obj = Controller.__new__(AlbumThumbController, *args, **kargs)
+        obj.__init__(*args, **kargs)
+        return obj
+
+class AlbumGridController(Controller, OptionsControllerMixin):
     terra_type = "Controller/Folder/Image/Picasa/Service/Album"
 
     def __init__(self, model, canvas, parent):
         Controller.__init__(self, model, canvas, parent)
         self.animating = False
+        #TODO: show throbber while model is loading
         self.model.load()
 
         self._setup_view()
@@ -1073,5 +1090,570 @@ class ImageFullscreenController(Controller, OptionsControllerMixin):
     def options_model_get(self):
         return ImagesOptionsModelFolder(None, self)
 
+class AlbumThumbController(Controller, OptionsControllerMixin):
+    terra_type = "Controller/Folder/Image/Picasa/Service/Album"
+    click_constant = 20
+
+    def __init__(self, model, canvas, parent):
+        Controller.__init__(self, model, canvas, parent)
+        print canvas
+        print dir(canvas)
+ 
+        self.threshold_w = 0
+        self.row_limit_intervals = []
+        self.row_intervals = []
+
+        self.load_list = []
+        self.file_set_idler = None
 
 
+        self.thumb_request_list = []
+        self.thumb_request_idler = None
+
+        self.max_left_row = 0
+        self.min_right_row = 0
+
+
+        self._setup_view()
+        self._setup_model()
+        self.layout_values = None
+
+        self.thumbler = None
+        print "here"
+        self.fixed_height = self._retrieve_fixed_height()
+
+        self.obj_pool = ObjectPool(20, self.view.ImageFrameThumb)
+        self.deleting = False
+
+        OptionsControllerMixin.__init__(self)
+
+    def _setup_view(self):
+        self.view = ImageThumbScreen(self.evas, self.parent.view,
+                                     title=self.model.name,
+                                     elements=self.model.children)
+        self.view.callback_block_load = self.load_list_dequeue_all
+        self.view.callback_resume_load = self.load_list_enqueue_all
+
+        self.view.callback_clicked = self._cb_on_clicked
+        self.view.callback_move_offset = self._cb_move_offset
+        self.view.callback_resized = self._layout_view
+        self.view.callback_on_theme_changed = self.cb_on_theme_changed
+        self.view.callback_transition_in_finished = self.cb_on_transition_in_finished
+
+    def _setup_model(self):
+        self.model.callback_loaded = self._model_loaded
+        self.model.load()
+
+    def _model_loaded(self, model):
+       #TODO: fix this
+        x, y, w, h = self.layout_values
+        self._layout_view(x, y, w, h)
+        
+        self.view.loaded()
+        model.callback_loaded = None
+
+    def _layout_view(self, x, y, w, h):
+        self.layout_values = (x, y, w, h)
+        log.debug("in setup view: x = %s, y = %s, w = %s, h = %s" % (x, y ,w, h))
+        self.view.clear_all()
+
+        if not self.model.children:
+            return
+        self.model._sum_thumb_width = 0
+        for model_item in self.model.children:
+            self._setup_model_item(model_item)
+            self.model._sum_thumb_width += model_item.thumb_width
+
+        max_rows = self._calc_max_rows(h, self.fixed_height)
+
+        num_rows, row_width = self._calc_rows_num_width(max_rows,
+                                                        self.model._sum_thumb_width,
+                                                        w)
+
+        log.debug("number of rows in thumb grid = %s, row_width = %s" % (num_rows, row_width))
+
+        if num_rows <= 0:
+            return
+
+        # special condition for checking row size before appending image
+        no_row_overflow = (row_width == w)
+
+        self.view.image_grid.rows_set(num_rows, w, self.fixed_height)
+
+        current_row = 0
+        current_row_width = 0
+        self.threshold_w = w * 1.5
+        self.row_limit_intervals = []
+        self.row_intervals = []
+        self.view.row_widths = []
+        row_interval_ok = False
+        start_index = 0
+        # add children to _hboxes
+        for i, model_item in enumerate(self.model.children):
+            if current_row_width < self.threshold_w:
+                image_frame = self.view.ImageFrameThumb()
+                self._setup_image_frame(image_frame, model_item, file_set=False)
+
+                if not no_row_overflow:
+                    self.view.image_grid.append(current_row, image_frame)
+            elif not row_interval_ok:
+                self.row_intervals.append((start_index, i - 1))
+                row_interval_ok = True
+
+            model_w = model_item.thumb_width
+
+            current_row_width += model_w + self.view.image_grid.hpadding
+            if current_row_width > row_width and current_row < num_rows - 1:
+                self.view.row_widths.append(current_row_width)
+                if no_row_overflow:
+                    end_index = i - 1
+                    current_row_width = model_w
+                else:
+                    end_index = i
+                    current_row_width = 0
+
+                if not row_interval_ok:
+                    self.row_intervals.append((start_index, end_index))
+
+                self.row_limit_intervals.append((start_index, end_index))
+
+                start_index = end_index + 1
+                current_row += 1
+                row_interval_ok = False
+
+            if no_row_overflow:
+                self.view.image_grid.append(current_row, image_frame)
+
+        if len(self.row_limit_intervals) < num_rows:
+            # append last row
+            self.view.row_widths.append(current_row_width)
+            self.row_limit_intervals.append((start_index, i))
+            if not row_interval_ok:
+                self.row_intervals.append((start_index, i))
+
+        log.debug("row limit intervals = %s" % self.row_limit_intervals)
+        log.debug("row intervals = %s" % self.row_intervals)
+
+        self._update_external_rows()
+
+        self.view.show()
+
+    def _setup_image_frame(self, image_frame, model_item, file_set=True):
+        image_frame.model_set(model_item)
+        model_item.image_frame = image_frame
+        image_frame.resize_for_image_size(model_item.thumb_width,
+                                          model_item.thumb_height)
+        image_frame.hide_image()
+        if file_set and not self.view.over_speed:
+            self.load_list_enqueue(image_frame)
+
+        image_frame.show()
+
+    def _setup_model_item(self, model_item):
+        if self.fixed_height > model_item.height:
+            # corner case: avoid generating thumb for small pics
+            model_item.thumb_width = model_item.width
+            model_item.thumb_height = model_item.height
+            model_item.thumb_path = model_item.path
+        else:
+            print model_item
+            model_item.thumb_width = \
+                int(self.fixed_height * (model_item.width / float(model_item.height)))
+            model_item.thumb_height = self.fixed_height
+            model_item.thumb_path = None
+
+    def load_list_enqueue_all(self):
+        not_visible_list = []
+        num_rows = self.view.image_grid.num_rows_get()
+        for row_index in xrange(num_rows):
+            row = self.view.image_grid.row_get(row_index)
+            for child in row:
+                if child.rect.top_left in self.view.rect or \
+                   child.rect.top_right in self.view.rect:
+                    self.load_list_enqueue(child)
+                else:
+                    not_visible_list.append(child)
+
+        for child in not_visible_list:
+            self.load_list_enqueue(child)
+        return False
+
+    def load_list_dequeue_all(self):
+        self.load_list = []
+        self.thumb_request_list = []
+
+    def load_list_enqueue(self, item):
+        # need to generate thumb
+        if not item.model.thumb_path:
+            self.thumb_request_list_enqueue(item.model)
+            return
+
+        self.load_list.append(item)
+        self.idler_file_set_add()
+
+    def loading_stop(self):
+        self.idler_file_set_remove()
+        self.load_list = []
+
+    def idler_file_set_remove(self):
+        if self.file_set_idler:
+            self.file_set_idler.delete()
+
+        self.file_set_idler = None
+
+    def idler_file_set_add(self):
+        if not self.load_list or self.file_set_idler or self.deleting:
+            return
+
+        self.file_set_idler = ecore.idler_add(self.idler_file_set_cb)
+
+    def idler_file_set_cb(self):
+        if not self.load_list:
+            self.file_set_idler = None
+            return False
+
+        child = self.load_list.pop(0)
+
+        if not child.model:
+            return True
+
+        child.file_set_cb()
+        return True
+
+    def thumb_request_list_enqueue(self, model):
+        self.thumb_request_list.append(model)
+        self.idler_thumb_request_add()
+
+    def idler_thumb_request_remove(self):
+        if self.thumb_request_idler:
+            self.thumb_request_idler.delete()
+
+        self.thumb_request_idler = None
+
+    def idler_thumb_request_add(self):
+        if not self.thumb_request_list or self.thumb_request_idler \
+           or self.deleting:
+            return
+        self.thumb_request_idler = ecore.idler_add(self.idler_thumb_request_cb)
+
+    def idler_thumb_request_cb(self):
+        if not self.thumb_request_list:
+            self.thumb_request_idler = None
+            return False
+        model = self.thumb_request_list.pop(0)
+        print model
+        if not model:
+            return True
+
+        def down_finished_cb():
+            model.thumb_path = model.thumb_save_path
+            if model.image_frame:
+                self.load_list_enqueue(model.image_frame)
+            
+            self.thumb_request_idler = None
+            self.idler_thumb_request_add()
+
+        def file_exists():
+            model.thumb_path = model.thumb_save_path
+            if model.image_frame:
+                self.load_list_enqueue(model.image_frame)
+ 
+            self.thumb_request_idler = None
+            self.idler_thumb_request_add()
+
+        download_file(model, model.thumb_save_path, model.thumb_url, \
+                file_exists, down_finished_cb, attr="downloader_thumb")
+
+        return False
+
+    def _retrieve_fixed_height(self):
+        dummy_iframe = self.view.ImageFrameThumb()
+        result = dummy_iframe.size_max[1]
+        dummy_iframe.delete()
+        return result
+
+    def _calc_rows_num_width(self, max_rows, total_width, min_row_width):
+        if total_width <= 0 or max_rows <= 0:
+            return (0, 0)
+
+        total_pad_width = total_width + (self.model.size - 1) \
+                          * self.view.image_grid.hpadding
+
+        row_width = total_pad_width / max_rows
+        row_width = max(row_width, min_row_width)
+
+        if total_pad_width < max_rows * min_row_width:
+            num_rows = int(math.ceil(total_pad_width / float(row_width)))
+        else:
+            num_rows = max_rows
+
+        return num_rows, row_width
+
+    def _calc_max_rows(self, total_h, items_max_h):
+        if items_max_h <= 0:
+            return 0
+
+        max_rows = total_h / (items_max_h + self.view.image_grid.vpadding)
+
+        return max_rows
+
+    def _next_model_item(self, row):
+        current = self.view.image_grid.child_get(row, -1)
+        current_index = current.model.index
+
+        if current_index >= self.row_limit_intervals[row][1]:
+            return None
+
+        return self.model.children[current_index + 1]
+
+    def _prev_model_item(self, row):
+        current = self.view.image_grid.child_get(row, 0)
+        current_index = current.model.index
+
+        if current_index <= self.row_limit_intervals[row][0]:
+            return None
+
+        return self.model.children[current_index - 1]
+
+    def _update_row_interval(self, row, offset_start, offset_end):
+        cur_start, cur_end = self.row_intervals[row]
+        self.row_intervals[row] = cur_start + offset_start, cur_end + offset_end
+
+    def _update_external_rows(self):
+        self.min_right_row = self.view.image_grid.children_min_right_get()
+        self.max_left_row = self.view.image_grid.children_max_left_get()
+
+    def _image_frame_clear(self, image_frame):
+        image_frame.hide_image()
+        image_frame.model.image_frame = None
+        image_frame.model_unset()
+
+    def expand_block_left(self):
+        updated = False
+        expand_width = 150
+
+        for row, hbox in enumerate(self.view.image_grid._hboxes):
+            width = 0
+            row_expand_width = expand_width - \
+                abs(hbox.pos[0] - self.max_left_row.pos[0])
+
+            while width < row_expand_width:
+                if not self.expand_left(row):
+                    break
+
+                updated = True
+                new_obj = hbox.child_get(0)
+                width += new_obj.image.size[0] + self.view.image_grid.hpadding
+
+            if updated:
+                row_width = hbox.top_right[0] - hbox.pos[0]
+                row_retreat_width = row_width - self.threshold_w
+
+                self.retreat_right(row, row_retreat_width)
+
+        self._update_external_rows()
+
+        return updated
+
+    def expand_left(self, row):
+        prev_model = self._prev_model_item(row)
+        if not prev_model:
+            return False
+
+        self._update_row_interval(row, -1, 0)
+
+        log.debug("expanding left row = %s" % row)
+        image_frame = self.obj_pool.get()
+        self._setup_image_frame(image_frame, prev_model)
+
+        self.view.image_grid.prepend(row, image_frame)
+
+        return True
+
+    def retreat_left(self, row, retreat_width):
+        row_width = 0
+        log.debug("retreating left")
+
+        head = self.view.image_grid._hboxes[row].child_get(0)
+        while retreat_width > 0 and head.top_right[0] < 0:
+            self.view.image_grid.remove(row, head)
+            self._update_row_interval(row, 1, 0)
+            retreat_width -= (self.view.image_grid.hpadding + head.size[0])
+            self._image_frame_clear(head)
+            self.obj_pool.release(head)
+            head = self.view.image_grid._hboxes[row].child_get(0)
+
+    def expand_block_right(self):
+        updated = False
+        expand_width = 150
+
+        for row, hbox in enumerate(self.view.image_grid._hboxes):
+            width = 0
+            row_expand_width = expand_width - \
+                abs(hbox.top_right[0] - self.min_right_row.top_right[0])
+
+            while width < row_expand_width:
+                if not self.expand_right(row):
+                    break
+
+                updated = True
+                new_obj = hbox.child_get(-1)
+                width += new_obj.image.size[0] + self.view.image_grid.hpadding
+
+            if updated:
+                row_width = hbox.top_right[0] - hbox.pos[0]
+                row_retreat_width = row_width - self.threshold_w
+                self.retreat_left(row, row_retreat_width)
+
+        self._update_external_rows()
+
+        return updated
+
+    def expand_right(self, row):
+        next_model = self._next_model_item(row)
+        if not next_model:
+            return False
+
+        self._update_row_interval(row, 0, 1)
+
+        log.debug("expanding right row = %s" % row)
+        image_frame = self.obj_pool.get()
+        self._setup_image_frame(image_frame, next_model)
+
+        self.view.image_grid.append(row, image_frame)
+
+        return True
+
+    def retreat_right(self, row, retreat_width):
+        row_width = 0
+        log.debug("retreating right")
+
+        tail = self.view.image_grid._hboxes[row].child_get(-1)
+        while retreat_width > 0 and tail.pos[0] > self.view.size[0]:
+            self.view.image_grid.remove(row, tail)
+            self._update_row_interval(row, 0, -1)
+            retreat_width -= (self.view.image_grid.hpadding + tail.size[0])
+            self._image_frame_clear(tail)
+            self.obj_pool.release(tail)
+            tail = self.view.image_grid._hboxes[row].child_get(-1)
+
+    def _cb_move_offset(self, offset_x):
+        if offset_x == 0 or not self.model.children:
+            return False
+
+        result = True
+        border_offset = 100
+        expand_offset = 400
+
+        if offset_x < 0:
+            view_right_x = self.view.top_right[0]
+            row_new_right_x = self.min_right_row.top_right[0] + offset_x
+
+            if row_new_right_x < view_right_x + expand_offset:
+                if self.expand_block_right():
+                    row_new_right_x = self.min_right_row.top_right[0] + offset_x
+                    if row_new_right_x < view_right_x:
+                        offset_x = view_right_x - self.min_right_row.top_right[0]
+                        self.expand_block_right()
+                else:
+                    grid_right_x = self.view.image_grid.children_rightmost_x()
+                    grid_new_right_x = grid_right_x + offset_x
+
+                    if grid_new_right_x < view_right_x - border_offset:
+                        offset_x = min(0, view_right_x - border_offset - grid_right_x)
+                        result = False
+        else:
+            view_left_x = self.view.pos[0]
+            row_new_left_x = self.max_left_row.pos[0] + offset_x
+
+            if row_new_left_x > view_left_x - expand_offset:
+                if self.expand_block_left():
+                    row_new_left_x = self.max_left_row.pos[0] + offset_x
+                    if row_new_left_x > view_left_x:
+                        offset_x = view_left_x - self.max_left_row.pos[0]
+                        self.expand_block_left()
+                else:
+                    grid_left_x = self.view.image_grid.children_leftmost_x()
+                    grid_new_left_x = grid_left_x + offset_x
+
+                    if grid_new_left_x > view_left_x + border_offset:
+                        offset_x = max(0, view_left_x + border_offset - grid_left_x)
+                        result = False
+
+        self.view.image_grid.children_move_relative(offset_x, 0)
+
+        return result
+
+    def goto_next_screen(self, image_frame):
+        log.debug("Clicked in item of model = %r" % image_frame.model)
+        # setting model folder current index
+        self.model.current = image_frame.model.index
+
+        self.load_list_dequeue_all()
+
+        internal_controller = ImageInternalController(self.model,
+                                                      self.evas,
+                                                      self.parent)
+        self.parent.use(internal_controller)
+
+    def _cb_on_clicked(self, image_frame):
+        self.goto_next_screen(image_frame)
+
+    def cb_on_transition_in_finished(self, *ignored):
+        ecore.timer_add(1.0, self.load_list_enqueue_all)
+
+    def cb_on_theme_changed(self):
+        for obj in self.obj_pool.free_objs_iter():
+            obj.theme_changed()
+
+    def delete(self):
+        self.deleting = True
+        self.load_list_dequeue_all()
+        self.obj_pool.delete()
+        self.model.unload()
+        if self.thumbler:
+            self.thumbler.stop()
+        self.view.delete()
+
+    def back(self):
+        self.parent.back()
+
+    def go_home(self):
+        self.parent.go_home()
+
+    def options_model_get(self):
+        return self.model.options_model_get(self)
+
+class ObjectPool(object):
+    def __init__(self, num_pre_allocate, generator, *args, **kargs):
+        self.free_objs = []
+        self.generator = generator
+        self.args = args
+        self.kargs = kargs
+
+        self.pre_allocate(num_pre_allocate)
+
+    def pre_allocate(self, num_objs):
+        for i in xrange(num_objs):
+            obj = self.create_instance()
+            self.free_objs.insert(0, obj)
+
+    def create_instance(self):
+        obj = self.generator(*self.args, **self.kargs)
+        return obj
+
+    def get(self):
+        if not self.free_objs:
+            return self.create_instance()
+
+        return self.free_objs.pop(0)
+
+    def release(self, obj):
+        self.free_objs.insert(0, obj)
+
+    def delete(self):
+        for obj in self.free_objs:
+            obj.delete()
+
+    def free_objs_iter(self):
+        return self.free_objs.__iter__()
