@@ -35,7 +35,6 @@ from efl_utils.animations import DecelerateTimelineAnimation \
                                         as TimelineAnimation
 mouse_move_threshold = 200
 
-
 from ui import ImageGridScreen
 from ui import ImageInternalScreen
 from ui import ImageFullScreen
@@ -648,7 +647,8 @@ class ImageInternalController(Controller):
     def back(self):
         self.parent.back()
 
-#TODO: make this class public in canola-core
+
+##TODO: make this class public in canola-core
 class ImageFullscreenController(Controller, OptionsControllerMixin):
     terra_type = "Controller/Media/Image"
     click_constant = 20
@@ -834,7 +834,7 @@ class ImageFullscreenController(Controller, OptionsControllerMixin):
     def start_slideshow_timeout(self):
         self.stop_slideshow_timeout()
         self._slideshow_timer = \
-            ecore.timer_add(self.slideshow_time, self.load_next,
+                    ecore.timer_add(self.slideshow_time, self.load_next,
                             self.slideshow_loop, self.image_preloaded)
 
     def stop_slideshow_timeout(self):
@@ -971,13 +971,13 @@ class ImageFullscreenController(Controller, OptionsControllerMixin):
             if self.slideshow_random:
                 if loop:
                     self.slideshow_random_idx = self.slideshow_random_idx % \
-                        len(self.slideshow_random_list)
+                                len(self.slideshow_random_list)
                 next_model = \
-                    self.slideshow_random_list[self.slideshow_random_idx][1]
+                            self.slideshow_random_list[self.slideshow_random_idx][1]
                 log.debug("random_idx = %d, model is %s" %
                           (self.slideshow_random_idx, next_model))
                 self.model.current = \
-                    self.slideshow_random_list[self.slideshow_random_idx][0]
+                            self.slideshow_random_list[self.slideshow_random_idx][0]
                 self.slideshow_random_idx += 1
             else:
                 next_model = self.model.next(loop)
@@ -1023,9 +1023,9 @@ class ImageFullscreenController(Controller, OptionsControllerMixin):
         try:
             if self.slideshow_random:
                 prev = \
-                    self.slideshow_random_list[self.slideshow_random_idx - 1][1]
+                            self.slideshow_random_list[self.slideshow_random_idx - 1][1]
                 next = \
-                    self.slideshow_random_list[self.slideshow_random_idx + 1][1]
+                            self.slideshow_random_list[self.slideshow_random_idx + 1][1]
             else:
                 prev = self.model.prev_get()
                 next = self.model.next_get()
@@ -1037,7 +1037,7 @@ class ImageFullscreenController(Controller, OptionsControllerMixin):
 
         if slideshow_active:
             self._slideshow_timer = \
-                ecore.timer_add(self.slideshow_time, self.load_next,
+                        ecore.timer_add(self.slideshow_time, self.load_next,
                                 self.slideshow_loop, self.image_preloaded)
 
     def stop_full_throbber(self):

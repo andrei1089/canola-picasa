@@ -789,6 +789,21 @@ class FullScreenUploadOptions(OptionsModelFolder):
                 FullScreenUploadAlbumModel(i.title.text, self, i.gphoto_id.text)
         else:
             UploadLoginFailedOptionModel(self)
+
+
+class FullScreenOptions(OptionsModelFolder):
+    def get_image_model(self):
+        model = self.screen_controller.model
+        return model.children[model.current]
+
+class FullScreenImageInfoOptions(FullScreenOptions):
+    terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaImageInfo"
+    title = "Image Info"
+    
+    def __init__(self, parent, screen_controller=None):
+        if not isinstance(parent.screen_controller.model, AlbumServiceModelFolder):
+            return
+        FullScreenOptions.__init__(self, parent, screen_controller)
     
 class AlbumAccessModel(Model):
     def __init__(self, name, parent=None):

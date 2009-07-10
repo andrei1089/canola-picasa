@@ -18,12 +18,15 @@ import ecore
 import evas.decorators
 import logging
 
+from time import gmtime, strftime
+
 from terra.core.manager import Manager
 from terra.core.threaded_func import ThreadedFunction
 from terra.ui.modal import Modal
 from terra.ui.throbber import EtkThrobber
 from terra.ui.panel import PanelContentFrame
-
+from terra.ui.base import PluginEdjeWidget
+from terra.ui.base import PluginThemeMixin
 from manager import PicasaManager
 
 manager = Manager()
@@ -534,5 +537,73 @@ class FullScreenUploadAlbumController(ModalController):
         self.model.callback_unlocked = None
         self.model.callback_refresh = None
 
+BasicPanel = manager.get_class("Controller/BasicPanel")
+BaseScrollableText = manager.get_class("Widget/ScrollableTextBlock")
+
+class ScrollableTextBlock(PluginThemeMixin, BaseScrollableText):
+    plugin = "picasa"
+    group = "textblock_description"
 
 
+class FullScreenImageInfoOptions(BasicPanel):
+    terra_type = "Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaImageInfo"
+
+    def __init__(self, model, canvas, parent, theme=None, edje_group="panel_info_picasa"):
+        BasicPanel.__init__(self, model, canvas, parent)
+
+        self.thumbnail = evas.FilledImage(canvas)
+
+        self._body = PluginEdjeWidget(self.view.evas, edje_group, self.view, plugin="picasa")
+
+        self.description = ScrollableTextBlock(self.view.evas, self.view)
+        self._body.part_swallow("description", self.description)
+
+        self.model = model
+        self.image_data = self.model.get_image_model().image
+
+        self.inner_contents_set(self._body)
+        self.setup_information()
+
+    def setup_information(self):
+        title = self.image_data.media.title.text
+        author = self.image_data.media.credit.text
+        if self.image_data.exif.time is not None:
+            date_taken = int(self.image_data.exif.time.text) / 1000
+            date_taken = strftime("%b %d, %Y", gmtime(date_taken))
+        else:
+            date_taken = "N/A"
+
+        self._body.part_text_set("title", title)
+        self._body.part_text_set("author", "From " + author)
+        self._body.part_text_set("date_taken", "Taken on " + date_taken )
+        self._body.part_swallow("contents", self.thumbnail)
+        
+        text = ""
+        if  self.image_data.summary is not None and self.image_data.summary.text is not None:
+            text = "Description:<br>" + self.image_data.summary.text + "<br>"
+
+        if self.image_data.media.keywords is not None and self.image_data.media.keywords.text is not None:
+            text = text + "Tags:<br>"
+            text = text + self.image_data.media.keywords.text.replace(", ", "<br>") + "<br>"
+
+        dim = "Dimensions: %sx%s px" % (
+                int(self.model.get_image_model().width),
+                int(self.model.get_image_model().height)
+            )
+        text = text + dim
+
+        self.description.text_set(text)
+
+        try:
+            thumbnail_path = self.model.get_image_model().thumb_path
+            self.thumbnail.file_set(thumbnail_path)
+            self._body.signal_emit("thumb,show", "")
+        except Exception, e:
+            self._body.signal_emit("thumb,hide", "")
+
+    def delete(self):
+        self._body.delete()
+        self.thumbnail.delete()
+        self.description.delete()
+        BasicPanel.delete(self)
+    
