@@ -586,6 +586,11 @@ class FullScreenImageInfoOptionsController(BasicPanel):
             text = text + "Tags:<br>"
             text = text + self.image_data.media.keywords.text.replace(", ", "<br>") + "<br>"
 
+        text = text + "Comments: " + self.image_data.commentCount.text + "<br>"
+
+        if self.image_data.geo.Point.pos.text is not None:
+            text = text + "Location: " + self.image_data.geo.Point.pos.text + "<br>"
+
         dim = "Dimensions: %sx%s px" % (
                 int(self.model.get_image_model().width),
                 int(self.model.get_image_model().height)
