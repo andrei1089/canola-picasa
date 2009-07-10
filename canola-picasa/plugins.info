@@ -8,6 +8,9 @@ filter_map = Icon/Folder/Task/Image/Picasa - Icon
              Model/Options/Folder/Image/Picasa/Album/AddAlbum - PicasaAddAlbumOptionModel
              Model/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload - FullScreenUploadOptions
              Model/Options/Folder/Image/Fullscreen/Submenu/PicasaImageInfo - FullScreenImageInfoOptions
+             Model/Options/Folder/Image/Fullscreen/Submenu/PicasaCommentList - FullScreenCommentListOptions
+             Model/Options/Folder/Image/Fullscreen/Submenu/PicasaCommentList/Item - FullScreenCommentOptions
+
 
 [Picasa Controller]
 modname = picasa.controller
@@ -29,6 +32,6 @@ filter_map = Controller/Settings/Folder/InternetMedia/Picasa - OptionsController
              Controller/Options/Folder/Image/Picasa/Album/Photocast - PhotocastSyncController
              Controller/Options/Folder/Image/Picasa/Album/Photocast/Refresh - PhotocastRefreshController
              Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload/Submenu - FullScreenUploadAlbumController
-             Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaImageInfo - FullScreenImageInfoOptions
-
-
+             Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaImageInfo - FullScreenImageInfoOptionsController
+             Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaCommentList - FullScreenCommentListOptionsController
+             Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaCommentList/Item - FullScreenCommentOptionsController

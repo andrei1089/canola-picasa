@@ -790,7 +790,6 @@ class FullScreenUploadOptions(OptionsModelFolder):
         else:
             UploadLoginFailedOptionModel(self)
 
-
 class FullScreenOptions(OptionsModelFolder):
     def get_image_model(self):
         model = self.screen_controller.model
@@ -804,6 +803,28 @@ class FullScreenImageInfoOptions(FullScreenOptions):
         if not isinstance(parent.screen_controller.model, AlbumServiceModelFolder):
             return
         FullScreenOptions.__init__(self, parent, screen_controller)
+
+class FullScreenCommentOptions(FullScreenOptions):
+    terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaCommentList/Item"
+
+class FullScreenCommentListOptions(FullScreenOptions):
+    terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaCommentList"
+    title = "Comments"
+
+    def __init__(self, parent, screen_controller=None):
+        if not isinstance(parent.screen_controller.model, AlbumServiceModelFolder):
+            return
+        FullScreenOptions.__init__(self, parent, screen_controller)
+
+    def do_load(self):
+        image_data = self.get_image_model().image
+
+        list = picasa_manager.get_comments_for_image(image_data)
+        for l in list:
+            c = FullScreenCommentOptions(self, self.screen_controller)
+            c.prop = l 
+            c.name = l["title"]
+            c.title = l["title"]
     
 class AlbumAccessModel(Model):
     def __init__(self, name, parent=None):

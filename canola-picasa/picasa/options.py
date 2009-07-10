@@ -545,7 +545,7 @@ class ScrollableTextBlock(PluginThemeMixin, BaseScrollableText):
     group = "textblock_description"
 
 
-class FullScreenImageInfoOptions(BasicPanel):
+class FullScreenImageInfoOptionsController(BasicPanel):
     terra_type = "Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaImageInfo"
 
     def __init__(self, model, canvas, parent, theme=None, edje_group="panel_info_picasa"):
@@ -606,4 +606,42 @@ class FullScreenImageInfoOptions(BasicPanel):
         self.thumbnail.delete()
         self.description.delete()
         BasicPanel.delete(self)
-    
+  
+ControllerOptionsFolder = manager.get_class("Controller/Options/Folder")
+class FullScreenCommentListOptionsController(ControllerOptionsFolder):
+    terra_type = "Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaCommentList"
+
+    def _setup_view(self):
+        ControllerOptionsFolder._setup_view(self)
+
+        self.msg_tit = "No comments for this photo"
+        self.view.header_text_set(self.msg_tit)
+
+class FullScreenCommentOptionsController(BasicPanel):
+    terra_type = "Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaCommentList/Item"
+
+    def __init__(self, model, canvas, parent, theme=None):
+        BasicPanel.__init__(self, model, canvas, parent)
+        self._body = PluginEdjeWidget(self.view.evas, "panel_comment_picasa",
+                                     self.view, plugin="picasa")
+        self.description = ScrollableTextBlock(self.view.evas, self.view)
+        self._body.part_swallow("description", self.description)
+        self.inner_contents_set(self._body)
+        self.setup_information()
+
+    def setup_information(self):
+        model = self.model.screen_controller.model
+        self._body.part_text_set("author", "From: %s" % self.model.prop["author"])
+        #TODO: parse date from rfc3339 format
+        self._body.part_text_set("date", "Date: %s" % self.model.prop["date"])
+
+        comment_panel = self.model.prop["content"]
+        comment_panel = comment_panel.replace("\n", "<br>")
+        self.description.text_set(comment_panel)
+
+    def delete(self):
+        self._body.delete()
+        self.description.delete()
+        BasicPanel.delete(self)
+
+
