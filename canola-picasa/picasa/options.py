@@ -616,14 +616,20 @@ ControllerOptionsFolder = manager.get_class("Controller/Options/Folder")
 class FullScreenCommentListOptionsController(ControllerOptionsFolder):
     terra_type = "Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaCommentList"
 
+    def __init__(self, model, canvas, parent):
+        model.callback_finished = self.model_loaded
+        ControllerOptionsFolder.__init__(self, model, canvas, parent)
+
+    def model_loaded(self):
+        if self.model.count == 0:
+            msg_tit = "No comments for this photo"
+        else:
+            msg_tit = "%d comments for this photo" % self.model.count
+        self.view.header_text_set(msg_tit)
+
     def _setup_view(self):
         ControllerOptionsFolder._setup_view(self)
-
-        if self.model.count == 0:
-            self.msg_tit = "No comments for this photo"
-        else:
-            self.msg_tit = "%d comments for this photo" % self.model.count
-        self.view.header_text_set(self.msg_tit)
+        self.view.header_text_set("Loading comments...")
 
 class FullScreenCommentOptionsController(BasicPanel):
     terra_type = "Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaCommentList/Item"

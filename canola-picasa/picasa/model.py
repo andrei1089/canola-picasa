@@ -807,6 +807,13 @@ class FullScreenImageInfoOptions(FullScreenOptions):
 class FullScreenCommentOptions(FullScreenOptions):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaCommentList/Item"
 
+    def __init__(self, parent, screen_controller=None, prop=None):
+        self.prop = prop
+        if self.prop is not None:
+            self.name = prop["title"]
+            self.title = prop["title"]
+        FullScreenOptions.__init__(self, parent, screen_controller)
+
 class FullScreenCommentListOptions(FullScreenOptions):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaCommentList"
     title = "Comments"
@@ -817,16 +824,22 @@ class FullScreenCommentListOptions(FullScreenOptions):
         FullScreenOptions.__init__(self, parent, screen_controller)
 
     def do_load(self):
+        def th_func():
+            self.load_comments()
+        def th_finished(exception, retval):
+            self.callback_finished()
+
+        ThreadedFunction(th_finished, th_func).start()
+
+
+    def load_comments(self):
         image_data = self.get_image_model().image
 
         list = picasa_manager.get_comments_for_image(image_data)
         self.count = len(list)
         for l in list:
-            c = FullScreenCommentOptions(self, self.screen_controller)
-            c.prop = l 
-            c.name = l["title"]
-            c.title = l["title"]
-    
+            FullScreenCommentOptions(self, self.screen_controller, l)
+   
 class AlbumAccessModel(Model):
     def __init__(self, name, parent=None):
         Model.__init__(self, name, parent)
