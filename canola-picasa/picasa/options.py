@@ -619,7 +619,10 @@ class FullScreenCommentListOptionsController(ControllerOptionsFolder):
     def _setup_view(self):
         ControllerOptionsFolder._setup_view(self)
 
-        self.msg_tit = "No comments for this photo"
+        if self.model.count == 0:
+            self.msg_tit = "No comments for this photo"
+        else:
+            self.msg_tit = "%d comments for this photo" % self.model.count
         self.view.header_text_set(self.msg_tit)
 
 class FullScreenCommentOptionsController(BasicPanel):

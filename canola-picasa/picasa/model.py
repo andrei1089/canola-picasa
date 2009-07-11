@@ -820,6 +820,7 @@ class FullScreenCommentListOptions(FullScreenOptions):
         image_data = self.get_image_model().image
 
         list = picasa_manager.get_comments_for_image(image_data)
+        self.count = len(list)
         for l in list:
             c = FullScreenCommentOptions(self, self.screen_controller)
             c.prop = l 
