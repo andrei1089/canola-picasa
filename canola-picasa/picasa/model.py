@@ -75,7 +75,7 @@ class MainModelFolder(ModelFolder, Task):
             if exception is not None or not picasa_manager.is_logged():
                 msg = "Login error, please check your account details"
                 log.error(exception)
-                
+
                 if self.callback_notify:
                     self.callback_notify(CanolaError(msg))
 
@@ -152,12 +152,12 @@ class AlbumServiceModelFolder(ModelFolder):
             os.rename(thumb_path, path)
             if end_callback:
                 end_callback(self)
-        
+
         def request_finished(exception, retval):
             self.thumbler.request_add(path,
                                            epsilon.EPSILON_THUMB_CROP,
                                            epsilon.EPSILON_THUMB_CROP,
-                                           120, 90, 
+                                           120, 90,
                                            thumbler_finished_cb)
 
         url = self.prop["thumb_url"]
@@ -211,7 +211,7 @@ class AlbumServiceModelFolder(ModelFolder):
 
     def options_model_get(self, controller):
         """
-        options to change name, description, access should not appear for 
+        options to change name, description, access should not appear for
         community albums
         """
         if not self.community:
@@ -224,14 +224,14 @@ class UserAlbumModel(AlbumServiceModelFolder):
 
     def do_search(self):
         return picasa_manager.get_photos_from_album(self.prop["album_id"]);
-        
+
 class CommunityAlbumModel(AlbumServiceModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album/CommunityAlbum"
 
     def do_search(self):
         return picasa_manager.get_photos_from_album(self.prop["album_id"], self.prop["album_user"]);
 
-class CommunitySearchTag(AlbumServiceModelFolder): 
+class CommunitySearchTag(AlbumServiceModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album/SearchTag"
     dialog_title = "Search by tag"
     dialog_msg = "Enter tag:"
@@ -264,7 +264,7 @@ class ServiceModelFolder(ModelFolder):
     empty_msg = "No albums found"
 
     """
-    marks whether or not the albums belong to current user or the community, 
+    marks whether or not the albums belong to current user or the community,
     used to disable some options ( delete, add album, change name etc.. )
 
     """
@@ -766,7 +766,7 @@ class UploadLoginFailedOptionModel(OptionsActionModel):
 
 class FullScreenUploadOptions(OptionsModelFolder):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload"
-    title = "Upload to Picasa"
+    title = "Upload picture to Picasa"
 
     def __init__(self, parent, screen_controller=None):
         if isinstance(parent.screen_controller.model, AlbumServiceModelFolder):
@@ -790,6 +790,55 @@ class FullScreenUploadOptions(OptionsModelFolder):
         else:
             UploadLoginFailedOptionModel(self)
 
+class FullScreenUploadAllOptions(OptionsActionModel):
+    terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaUploadAll"
+    name = "Upload album to Picasa"
+
+    def __init__(self, parent=None):
+        if isinstance(parent.screen_controller.model, AlbumServiceModelFolder):
+            return
+        OptionsActionModel.__init__(self, parent)
+
+    def upload(self):
+        album_model = self.screen_controller.model
+
+        if not picasa_manager.is_logged():
+            picasa_manager.login()
+
+        if not picasa_manager.is_logged():
+            return (False, "Failed to login")
+
+        res = picasa_manager.create_album(album_model.name)
+        if not res:
+            return (False, "Failed to create album")
+        album_id = res.gphoto_id.text
+        cnt = 0
+        total = len(album_model.children)
+        self.callback_refresh("uploading<br>0 of %s done" % total)
+
+        for image in album_model.children:
+            ret = picasa_manager.upload_picture(image.path, album_id)
+            cnt+=1
+            if not ret:
+                return (False, "Failed to upload<br>picture %d" % cnt)
+            self.callback_refresh("uploading<br>%s of %s done" % (cnt, total))
+        return (True, None)
+
+    def execute(self):
+        def upload_finished(exception, retval):
+            if exception is not None:
+                log.error(exception)
+            res, error = retval
+            if not res:
+                self.callback_refresh(error)
+                ecore.timer_add(1, self.callback_unlocked)
+                return
+            self.callback_unlocked()
+
+        self.callback_refresh("uploading")
+        self.callback_locked()
+        ThreadedFunction(upload_finished, self.upload).start()
+
 class FullScreenOptions(OptionsModelFolder):
     def get_image_model(self):
         model = self.screen_controller.model
@@ -798,7 +847,7 @@ class FullScreenOptions(OptionsModelFolder):
 class FullScreenImageInfoOptions(FullScreenOptions):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaImageInfo"
     title = "Image Info"
-    
+
     def __init__(self, parent, screen_controller=None):
         if not isinstance(parent.screen_controller.model, AlbumServiceModelFolder):
             return
@@ -839,7 +888,7 @@ class FullScreenCommentListOptions(FullScreenOptions):
         self.count = len(list)
         for l in list:
             FullScreenCommentOptions(self, self.screen_controller, l)
-   
+
 class AlbumAccessModel(Model):
     def __init__(self, name, parent=None):
         Model.__init__(self, name, parent)

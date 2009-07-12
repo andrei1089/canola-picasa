@@ -537,6 +537,40 @@ class FullScreenUploadAlbumController(ModalController):
         self.model.callback_unlocked = None
         self.model.callback_refresh = None
 
+class FullScreenUploadAllController(ModalController):
+    terra_type = "Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaUploadAll"
+
+    def __init__(self, model, canvas, parent):
+        ModalController.__init__(self, model, canvas, parent)
+
+        model.callback_locked = self.start
+        model.callback_unlocked = self.stop
+        model.callback_refresh = self.update_text
+
+        self.view = MessageView(parent.last_panel, "uploading<br> xx% done<br> 1 of 5 uploaded")
+        self.model.execute()
+
+    def start(self):
+        self.view.message(hide_cb=self.stop)
+        self.model.callback_locked = None
+
+    def stop(self):
+        def cb():
+            #TODO: hide options menu - doesn't work now!
+            self.parent.back()
+
+        self.view.hide(cb)
+
+    def update_text(self, text):
+        self.view.throbber.text_set(text)
+
+    def delete(self):
+        self.view.delete()
+        self.view = None
+        self.model.callback_locked = None
+        self.model.callback_unlocked = None
+        self.model.callback_refresh = None
+
 BasicPanel = manager.get_class("Controller/BasicPanel")
 BaseScrollableText = manager.get_class("Widget/ScrollableTextBlock")
 
@@ -577,7 +611,7 @@ class FullScreenImageInfoOptionsController(BasicPanel):
         self._body.part_text_set("author", "From " + author)
         self._body.part_text_set("date_taken", "Taken on " + date_taken )
         self._body.part_swallow("contents", self.thumbnail)
-        
+
         text = ""
         if  self.image_data.summary is not None and self.image_data.summary.text is not None:
             text = "Description:<br>" + self.image_data.summary.text + "<br>"
@@ -611,7 +645,7 @@ class FullScreenImageInfoOptionsController(BasicPanel):
         self.thumbnail.delete()
         self.description.delete()
         BasicPanel.delete(self)
-  
+
 ControllerOptionsFolder = manager.get_class("Controller/Options/Folder")
 class FullScreenCommentListOptionsController(ControllerOptionsFolder):
     terra_type = "Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaCommentList"
