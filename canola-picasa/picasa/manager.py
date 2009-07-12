@@ -203,26 +203,37 @@ class PicasaManager(Singleton):
             return False
         return True
 
-    def get_comments_for_image(self, image):
+    def _get_image_prop(self, image):
         image_id = image.gphoto_id.text
         album_id = image.albumid.text
-        
+
         link = image.link[0].href
         link = link[link.find("/user/")+6:]
         user = link[:link.find("/albumid/")]
+        return (user, album_id, image_id)
 
+
+    def get_comments_for_image(self, image):
+        user, album_id, image_id = self._get_image_prop(image)
         url = "http://picasaweb.google.com/data/feed/api/user/%s/albumid/%s/photoid/%s?kind=comment" % ( user, album_id, image_id)
-        
+
         feed = self.gd_client.GetFeed(url)
         list = []
         for i in feed.entry:
-            c = {} 
+            c = {}
             c["author"] = i.author[0].name.text
             c["content"] = i.content.text
             c["date"] = i.published.text
             c["title"] = c["content"][:40]
             list.append(c)
         return list
+
+    def add_comment(self, image, comment):
+        try:
+            self.gd_client.InsertComment(image, comment)
+        except:
+            return False
+        return True
 
 if __name__ == "__main__":
     p=PicasaManager()

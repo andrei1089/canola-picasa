@@ -49,7 +49,6 @@ class Icon(PluginDefaultIcon):
     icon = "icon/main_item/picasa"
     plugin = "picasa"
 
-
 class MainModelFolder(ModelFolder, Task):
     terra_type = "Model/Folder/Task/Image/Picasa"
     terra_task_type = "Task/Folder/Task/Image/Picasa"
@@ -838,6 +837,20 @@ class FullScreenUploadAllOptions(OptionsActionModel):
         self.callback_refresh("uploading")
         self.callback_locked()
         ThreadedFunction(upload_finished, self.upload).start()
+
+class FullScreenAddCommentOptions(Model):
+    terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaAddComment"
+    title = "Add comment"
+
+    def __init__(self, parent=None):
+        #comments can't be posted without being logged
+        if not isinstance(parent.screen_controller.model, AlbumServiceModelFolder) or not picasa_manager.is_logged():
+            return
+        Model.__init__(self, self.title, parent)
+
+    def add_comment(self, comment):
+        image_model =  self.parent.screen_controller.model.children[self.parent.screen_controller.model.current]
+        return picasa_manager.add_comment(image_model.image, comment)
 
 class FullScreenOptions(OptionsModelFolder):
     def get_image_model(self):

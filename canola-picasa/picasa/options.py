@@ -692,4 +692,105 @@ class FullScreenCommentOptionsController(BasicPanel):
         self.description.delete()
         BasicPanel.delete(self)
 
+class AddCommentView(Modal):
+    def __init__(self, parent, title, old_value, theme=None):
+        Modal.__init__(self, parent.view, title, theme,
+                       hborder=16, vborder=50)
+        self.callback_ok_clicked = None
+        self.callback_cancel_clicked = None
+        self.callback_escape = None
 
+        label = etk.Label("Comment:")
+        label.alignment_set(0.0, 1.0)
+        label.show()
+
+        self.entry = etk.TextView()
+
+        self.entry.size_request_set(150,150)
+        self.entry.show()
+
+
+        vbox = etk.VBox()
+        vbox.border_width_set(25)
+        vbox.append(label, etk.VBox.START, etk.VBox.FILL, 0)
+        vbox.append(self.entry, etk.VBox.START, etk.VBox.EXPAND, 0)
+        vbox.show()
+
+        self.modal_contents = PanelContentFrame(self.evas)
+        self.modal_contents.frame.add(vbox)
+        self.ok_button = self.modal_contents.button_add("OK")
+        self.ok_button.on_clicked(self._on_button_clicked)
+        self.cancel_button = self.modal_contents.button_add("  Cancel  ")
+        self.cancel_button.on_clicked(self._on_button_clicked)
+
+        self.modal_contents.handle_key_down = self.handle_key_down
+        self.contents_set(self.modal_contents.object)
+
+    def handle_key_down(self, ev):
+        if ev.key == "Escape":
+            if self.callback_escape:
+                self.callback_escape()
+            return False
+        return True
+
+    def _on_ok_clicked(self):
+        text = self.entry.textblock_get().text_get(0)
+        self.callback_ok_clicked(text)
+
+    def _on_button_clicked(self, bt):
+        if bt == self.ok_button:
+            self._on_ok_clicked()
+        elif bt == self.cancel_button:
+            if self.callback_cancel_clicked:
+                self.callback_cancel_clicked()
+
+    def do_on_focus(self):
+        self.modal_contents.object.focus = True
+
+    @evas.decorators.del_callback
+    def _destroy_contents(self):
+        self.modal_contents.destroy()
+
+class FullScreenAddCommentOptionsController(ModalController):
+    terra_type = "Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaAddComment"
+
+    def __init__(self, model, canvas, parent):
+        ModalController.__init__(self, model, canvas, parent)
+        self.model = model
+        self.parent = parent
+        self.view = AddCommentView(parent.last_panel, model.title, None)
+
+        self.view.callback_ok_clicked = self._on_ok_clicked
+        self.view.callback_cancel_clicked = self.close
+        self.view.callback_escape = self.close
+        self.view.show()
+
+    def close(self):
+        def cb(*ignored):
+            self.back()
+            self.parent.back()
+        self.view.hide(end_callback=cb)
+
+    def _on_ok_clicked(self, comment):
+        def th_function():
+            return self.model.add_comment(comment)
+
+        def th_finished(exception, retval):
+            def view_close():
+                self.close()
+
+            if not retval:
+                self.view.throbber.text_set("ERROR!")
+                ecore.timer_add(2, view_close)
+                return
+            self.close()
+
+        self.view.hide()
+        self.view = MessageView(self.parent.last_panel, "please wait")
+        self.view.message()
+        ThreadedFunction(th_finished, th_function).start()
+
+    def delete(self):
+        self.view.delete()
+        self.view = None
+        self.model = None
