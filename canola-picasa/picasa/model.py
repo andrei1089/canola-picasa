@@ -109,11 +109,13 @@ class ImageModel(Model):
         self.thumb_width = image.media.thumbnail[1].width
         self.thumb_height = image.media.thumbnail[1].height
         self.thumb_url = image.media.thumbnail[1].url
-        self.thumb_save_path = picasa_manager.get_thumbs_path() + "/th_" + \
-                                                        str(self.id) + ".jpg"
 
-        self.path = picasa_manager.get_thumbs_path() + "/" + \
-                                                        str(self.id) + ".jpg"
+        path = picasa_manager.get_thumbs_path()
+        self.thumb_save_path = os.path.join(path, "th_%s.jpg" % str(self.id))
+
+        path = os.path.dirname(path)
+        self.path = os.path.join(path, "%s.jpg" % str(self.id))
+
         self.url = image.media.content[0].url
         self.width = float(image.media.content[0].width)
         self.height = float(image.media.content[0].height)
@@ -318,8 +320,9 @@ class ServiceModelFolder(ModelFolder):
         prop = {}
         prop["album_title"] = album.title.text
         prop["album_id"] = album.gphoto_id.text
-        prop["thumb_local"]= os.path.join( picasa_manager.get_thumbs_path(), \
-                                                    prop["album_id"] + ".jpg")
+        thumb_path = os.path.join(picasa_manager.get_thumbs_path(), \
+                                  "%s.jpg" % album.gphoto_id.text)
+        prop["thumb_local"]= thumb_path
         prop["thumb_url"] = album.media.thumbnail[0].url
         prop["date"] = album.updated.text[:10]
         prop["access"] = album.access.text
@@ -475,18 +478,21 @@ class ClearCacheModel(MixedListItem):
             self.callback_locked()
 
         th_path = picasa_manager.get_thumbs_path()
-        file_list = os.listdir(th_path)
 
-        try:
-            for file in file_list:
-                os.remove(os.path.join(th_path, file))
-                self.cnt += 1
-                if self.cnt % 10 == 0 and self.callback_refresh:
-                    self.callback_refresh()
-        except:
-            log.error("Error while clearing the cache")
-            self.result = "ERROR!"
-            self.cnt = -1
+        for path in [th_path, os.path.dirname(th_path)]:
+            try:
+                file_list = os.listdir(path)
+                for file in file_list:
+                    os.remove(os.path.join(path, file))
+                    self.cnt += 1
+                    if self.cnt % 10 == 0 and self.callback_refresh:
+                        self.callback_refresh()
+                os.rmdir(path)
+            except OSError, e:
+                log.error("Error while clearing the cache %s" % e)
+                self.result = "ERROR!"
+                self.cnt = -1
+
 
         if self.cnt >= 0:
             self.result = self.result + "<br> %d files deleted" % self.cnt
@@ -742,7 +748,7 @@ class FullScreenUploadAlbumModel(OptionsActionModel):
         if not self.album_id:
             res = picasa_manager.create_album(self.name)
             if not res:
-                    return (False, "Cannot create new album") 
+                    return (False, "Cannot create new album")
             self.album_id = res.gphoto_id.text
 
         return picasa_manager.upload_picture(self.parent.image_path, self.album_id)
