@@ -742,7 +742,7 @@ class FullScreenUploadAlbumModel(OptionsActionModel):
         if not self.album_id:
             res = picasa_manager.create_album(self.name)
             if not res:
-                    return False
+                    return (False, "Cannot create new album") 
             self.album_id = res.gphoto_id.text
 
         return picasa_manager.upload_picture(self.parent.image_path, self.album_id)
@@ -751,9 +751,10 @@ class FullScreenUploadAlbumModel(OptionsActionModel):
         def upload_finished(exception, retval):
             if exception is not None:
                 log.error(exception)
-            if not retval:
-                self.callback_refresh("FAILED!")
-                log.error("Failed to upload picture %s" % self.parent.image_path)
+            ret, error = retval
+            if not ret:
+                self.callback_refresh("FAILED!<br>%s" % error[2])
+                log.error("Failed to upload picture %s, exception: %s" % (self.parent.image_path, error))
                 ecore.timer_add(1, self.callback_unlocked)
                 return
             self.callback_unlocked()
@@ -821,12 +822,12 @@ class FullScreenUploadAllOptions(OptionsActionModel):
         self.callback_refresh("uploading<br>0 of %s done" % total)
 
         for image in album_model.children:
-            ret = picasa_manager.upload_picture(image.path, album_id)
+            ret, error = picasa_manager.upload_picture(image.path, album_id)
             cnt+=1
             log.info("Uploading picture %s" % image.path)
             if not ret:
-                log.error("Failed to upload picture %s" % image.path)
-                return (False, "Failed to upload<br>picture %d" % cnt)
+                log.error("Failed to upload picture %s, exception: %s" % (image.path, error))
+                return (False, "Failed to upload<br>picture %d <br> %s" % (cnt, error[2]) )
             self.callback_refresh("uploading<br>%s of %s done" % (cnt, total))
         return (True, None)
 

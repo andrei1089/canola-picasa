@@ -21,6 +21,8 @@ import gdata.media
 import gdata.geo
 import gdata.service
 import os
+
+from gdata.photos.service import GooglePhotosException
 from terra.core.singleton import Singleton
 
 log = logging.getLogger("plugins.canola-picasa.manager")
@@ -203,10 +205,10 @@ class PicasaManager(Singleton):
         try:
             self.gd_client.InsertPhotoSimple(album_url, summary, \
                 summary, path, content_type='image/jpeg')
-        except gdata.photos.service.GooglePhotosException as error:
+        except GooglePhotosException as error:
             log.error("upload error %s" % error)
-            return False
-        return True
+            return (False, error)
+        return (True, None)
 
     def _get_image_prop(self, image):
         image_id = image.gphoto_id.text
