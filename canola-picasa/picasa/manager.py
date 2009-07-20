@@ -14,12 +14,16 @@
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
+
 import gdata.photos.service
 import gdata.media
 import gdata.geo
 import gdata.service
 import os
 from terra.core.singleton import Singleton
+
+log = logging.getLogger("plugins.canola-picasa.manager")
 
 class PicasaManager(Singleton):
     def __init__(self):
@@ -199,7 +203,8 @@ class PicasaManager(Singleton):
         try:
             self.gd_client.InsertPhotoSimple(album_url, summary, \
                 summary, path, content_type='image/jpeg')
-        except:
+        except gdata.photos.service.GooglePhotosException as error:
+            log.error("upload error %s" % error)
             return False
         return True
 

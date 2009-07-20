@@ -218,6 +218,10 @@ class AlbumServiceModelFolder(ModelFolder):
         else:
             return None
 
+    def do_unload(self):
+        self.thumbler.stop()
+        ModelFolder.do_unload(self)
+
 class UserAlbumModel(AlbumServiceModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album/UserAlbum"
 
@@ -749,6 +753,7 @@ class FullScreenUploadAlbumModel(OptionsActionModel):
                 log.error(exception)
             if not retval:
                 self.callback_refresh("FAILED!")
+                log.error("Failed to upload picture %s" % self.parent.image_path)
                 ecore.timer_add(1, self.callback_unlocked)
                 return
             self.callback_unlocked()
@@ -818,7 +823,9 @@ class FullScreenUploadAllOptions(OptionsActionModel):
         for image in album_model.children:
             ret = picasa_manager.upload_picture(image.path, album_id)
             cnt+=1
+            log.info("Uploading picture %s" % image.path)
             if not ret:
+                log.error("Failed to upload picture %s" % image.path)
                 return (False, "Failed to upload<br>picture %d" % cnt)
             self.callback_refresh("uploading<br>%s of %s done" % (cnt, total))
         return (True, None)

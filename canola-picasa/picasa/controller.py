@@ -140,8 +140,6 @@ class GeneralRowRenderer(PluginThemeMixin, BaseRowRenderer):
                 self._model.parent.callback_state_changed(self._model.parent)
 
                 self._model.parent.children.remove(self._model)
-                self._model.parent.inform_loaded()
-                self._model = None
             
             self.delete_button.signal_emit("unblock,events", "")
             self.delete_button.state_set(ActionButton.STATE_TRASH)
@@ -286,6 +284,7 @@ class AlbumGridController(Controller, OptionsControllerMixin):
         OptionsControllerMixin.__init__(self)
         
         try:
+            print "thumbnailer in album grid"
             self.thumbler = thumbnailer.CanolaThumbnailer()
         except RuntimeError, e:
             log.error(e)
