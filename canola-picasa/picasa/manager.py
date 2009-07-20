@@ -24,6 +24,7 @@ import os
 
 from gdata.photos.service import GooglePhotosException
 from terra.core.singleton import Singleton
+from terra.core.plugin_prefs import PluginPrefs
 
 log = logging.getLogger("plugins.canola-picasa.manager")
 
@@ -39,9 +40,9 @@ class PicasaManager(Singleton):
         self._user = ''
         self._password = ''
         self.albums =''
+        self.thumbs_path = ''
         self.outside_terra = False;
         try:
-            from terra.core.plugin_prefs import PluginPrefs
             self.prefs = PluginPrefs("picasa")
         except:
             print "running outside canola"
@@ -56,16 +57,22 @@ class PicasaManager(Singleton):
         return self.prefs.get(name, default)
 
     def get_thumbs_path(self):
-        try:
-            path = self.prefs["thumbs_path"]
-        except KeyError:
-            path = os.path.join( os.path.expanduser("~"), ".canola", \
-                                                    "picasa", "thumbs")
-            self.prefs["thumbs_path"] = path
-            self.prefs.save()
-        if not os.path.exists(path):
-            os.makedirs(path)
-        return path
+        if not self.thumbs_path:
+            try:
+                self.thumbs_path = self.prefs["thumbs_path"]
+            except KeyError:
+                try:
+                    download_path = PluginPrefs("settings")["download_path"]
+                except KeyError:
+                    download_path = os.path.join(os.path.expanduser("~"), ".canola")
+
+                self.thumbs_path = os.path.join(download_path, "picasa", "thumbnails")
+                self.set_preference("thumbs_path", self.thumbs_path)
+
+        if not os.path.exists(self.thumbs_path):
+            os.makedirs(self.thumbs_path)
+
+        return self.thumbs_path
 
     def set_preference(self, name, value):
         self.prefs[name] = value
