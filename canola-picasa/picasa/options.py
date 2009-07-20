@@ -160,7 +160,7 @@ class UserPassController(ModalController):
                 ecore.timer_add(1.5, cb_close)
 
             else:
-                self.view.message("Login error: %s" % \
+                self.view.message("Login error:<br>%s" % \
                                             picasa_manager.get_login_error())
                 ecore.timer_add(1.5, cb_close)
 

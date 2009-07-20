@@ -98,12 +98,10 @@ class PicasaManager(Singleton):
             self.gd_client.ProgrammaticLogin()
             self.logged = True
             self.albums = None
-        except gdata.service.BadAuthentication, X:
-            self.login_error = X.message
+        except gdata.service.Error as error:
+            log.error("Could not login to Picasa, exception: %s" % error)
+            self.login_error = error
             self.logged = False
-        except:
-            self.logged = False
-            self.login_error = "unknown error"
 
     def is_logged(self):
         return self.logged
