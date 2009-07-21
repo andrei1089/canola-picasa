@@ -128,6 +128,9 @@ class ImageModel(Model):
 
         Model.__init__(self, name, parent)
 
+    def delete_model(self):
+        return picasa_manager.delete_photo(self.image)
+
 class AlbumServiceModelFolder(ModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album"
 
@@ -190,8 +193,8 @@ class AlbumServiceModelFolder(ModelFolder):
                     self.callback_notify(CanolaError(msg))
             else:
                 for pic in retval.entry:
-                        ImageModel(pic.title.text, self, pic, self.size)
                         self.size += 1
+                        ImageModel(pic.title.text, self, pic, self.size-1)
             self.inform_loaded()
 
         self.size = 0
@@ -221,7 +224,9 @@ class AlbumServiceModelFolder(ModelFolder):
             return None
 
     def do_unload(self):
-        self.thumbler.stop()
+        if self.thumbler:
+            self.thumbler.stop()
+            self.thumbler = None
         ModelFolder.do_unload(self)
 
 class UserAlbumModel(AlbumServiceModelFolder):
@@ -915,6 +920,21 @@ class FullScreenCommentListOptions(FullScreenOptions):
         self.count = len(list)
         for l in list:
             FullScreenCommentOptions(self, self.screen_controller, l)
+
+class FullScreenDeletePicOptions(OptionsActionModel):
+    terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaDelete"
+    name = "Delete picture"
+
+    def __init__(self, parent=None):
+        if not isinstance(parent.screen_controller.model, AlbumServiceModelFolder):
+            return
+        #can't delete pictures from community albums
+        if parent.screen_controller.model.community:
+            return
+        OptionsActionModel.__init__(self, parent)
+
+    def execute(self):
+        self.callback_delete_pic()
 
 class AlbumAccessModel(Model):
     def __init__(self, name, parent=None):

@@ -284,7 +284,6 @@ class AlbumGridController(Controller, OptionsControllerMixin):
         OptionsControllerMixin.__init__(self)
         
         try:
-            print "thumbnailer in album grid"
             self.thumbler = thumbnailer.CanolaThumbnailer()
         except RuntimeError, e:
             log.error(e)
@@ -404,6 +403,8 @@ class ImageInternalController(Controller):
         self.animating = False
         self.is_in_transition_out = False
         self.update = False
+        self.model.changed_callback_add(self._update_ui)
+
         self.model.load()
  
         self._create_view()
@@ -423,6 +424,9 @@ class ImageInternalController(Controller):
 
     def cb_on_transition_from(self):
         self._setup_view()
+
+    def _update_ui(self, model):
+        self.view.model_updated(self.model.size==0)
 
     def _setup_view(self):
         self.is_in_transition_out = False
@@ -611,7 +615,8 @@ class ImageInternalController(Controller):
         self.hold()
 
     def cb_on_transition_in_finished(self, *ignored):
-        self.start_center_throbber(self.load_list[-1])
+        if len(self.load_list) > 0:
+            self.start_center_throbber(self.load_list[-1])
 
     def cb_on_show_image_finished(self):
         self.file_set()
@@ -661,6 +666,8 @@ class ImageFullscreenController(Controller, OptionsControllerMixin):
             self.is_model_folder = True
 
         Controller.__init__(self, model, canvas, parent)
+
+        self.model.changed_callback_add(self._model_loaded)
 
         # mger to disable screen power save during slideshow
         self._mger = Manager()
@@ -1112,8 +1119,6 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
 
     def __init__(self, model, canvas, parent):
         Controller.__init__(self, model, canvas, parent)
-        print canvas
-        print dir(canvas)
  
         self.threshold_w = 0
         self.row_limit_intervals = []
@@ -1135,7 +1140,6 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
         self.layout_values = None
 
         self.thumbler = None
-        print "here"
         self.fixed_height = self._retrieve_fixed_height()
 
         self.obj_pool = ObjectPool(20, self.view.ImageFrameThumb)

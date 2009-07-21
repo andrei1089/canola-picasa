@@ -31,6 +31,7 @@ from terra.core.manager import Manager
 from terra.ui.grid import CellRenderer
 from terra.ui.base import EdjeWidget
 from terra.ui.base import Widget
+from terra.ui.base import PluginThemeMixin
 from terra.ui.screen import Screen
 from terra.core.terra_object import TerraObject
 from terra.ui.kinetic import KineticMouse
@@ -467,7 +468,8 @@ class ImageItemFullscreen(evas.ClippedSmartObject):
         if self.callback_preloaded:
             self.callback_preloaded()
 
-class ImageInternalScreen(Screen):
+class ImageInternalScreen(PluginThemeMixin, Screen):
+    plugin = "picasa"
     view_name = "images_internal"
 
     def __init__(self, canvas, main_window, title="Photos", theme=None):
@@ -496,10 +498,19 @@ class ImageInternalScreen(Screen):
 
     def ImageFrameInternal(self, theme=None):
         return ImageFrameInternal(self.evas, self, theme)
-
+    
     def _setup_gui(self):
         self.image_box = ImageBoxContainer(self, hpadding=40, valign=0.2)
         self.part_swallow("contents", self.image_box)
+ 
+    def model_updated(self, message):
+        if message:
+            if self.image_box:
+                self.image_box.delete()
+                self.image_box = None
+            print "showing message"
+            self.part_text_set("message", "No pictures found.")
+            self.signal_emit("message,show", "")
 
     def clear_all(self):
         self.image_box.clear_all()
@@ -510,8 +521,9 @@ class ImageInternalScreen(Screen):
 
     def transition_from(self, old_view, end_callback=None):
         self.callback_transition_from()
-        x, y, w, h = self.image_box.geometry_get()
-        self.image_box._setup_gui(x, y, w, h)
+        if self.image_box:
+            x, y, w, h = self.image_box.geometry_get()
+            self.image_box._setup_gui(x, y, w, h)
 
         Screen.transition_from(self, old_view, end_callback)
 
@@ -532,6 +544,8 @@ class ImageInternalScreen(Screen):
         return True
 
     def _mouse_down_cb(self, obj, event_info, *args, **kargs):
+        if not self.image_box:
+            return
         self.old_pos = (-1, -1)
         self.orig_pos = self.evas.pointer_canvas_xy_get()
         i = self.image_box.center_object_index()
@@ -553,6 +567,8 @@ class ImageInternalScreen(Screen):
         self.animator = ecore.Animator(self._check_mouse_move_cb)
 
     def _mouse_up_cb(self, obj, event_info, *args, **kargs):
+        if not self.animator:
+            return
         self.animator.delete()
         self.animator = None
         if not self.callback_mouse_up:
@@ -621,7 +637,8 @@ class ImageInternalScreen(Screen):
 
     @evas.decorators.del_callback
     def _cb_on_delete(self):
-        self.image_box.delete()
+        if self.image_box:
+            self.image_box.delete()
 
 class ImageFullScreen(Screen, TerraObject):
     view_name = "images_fullscreen"
@@ -763,7 +780,8 @@ class ImageFullScreen(Screen, TerraObject):
         if self.elements:
             self.signal_emit("message,hide", "")
         else:
-            self.part_text_set("message", "No items found.")
+            self.image_current_get().hide()
+            self.part_text_set("message", "No pictures found.")
             self.signal_emit("message,show", "")
 
     def throbber_start(self):
@@ -1043,6 +1061,7 @@ class ImageGridScreen(Screen):
             self.callback_cancel_thumb(*args)
 
     def model_updated(self):
+        self.loaded()
         self._grid.model_updated()
 
     def loaded(self):

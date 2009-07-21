@@ -571,6 +571,74 @@ class FullScreenUploadAllController(ModalController):
         self.model.callback_unlocked = None
         self.model.callback_refresh = None
 
+class FullScreenDeletePicOptionsController(ModalController):
+    terra_type = "Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaDelete"
+
+    def __init__(self, model, canvas, parent):
+        ModalController.__init__(self, model, canvas, parent)
+
+        self.view = MessageView(parent.last_panel, "please wait")
+        self.screen_controller = parent.screen_controller
+        self.model.callback_delete_pic = self.delete_pic
+
+        self.model.execute()
+
+    def stop(self):
+        def cb():
+            self.parent.back()
+        self.view.hide(cb)
+
+    def start(self):
+        self.view.message(hide_cb=self.stop)
+        self.model.callback_locked = None
+
+    def update_text(self, text):
+        self.view.throbber.text_set(text)
+
+    def delete(self):
+        self.view.delete()
+        self.view = None
+        self.model.callback_locked = None
+        self.model.callback_unlocked = None
+        self.model.callback_refresh = None
+
+    def delete_pic(self):
+
+        def hide_cb():
+            self.stop()
+
+        def th_finished(exception, retval):
+            if exception is not None:
+                log.error("Exception while deleting image: %s" % exception)
+                self.update_text("ERROR!")
+                ecore.timer_add(2, hide_cb)
+                return
+            if not retval:
+                log.error("Error while deleting image")
+                self.update_text("ERROR!")
+                ecore.timer_add(2, hide_cb)
+                return
+            self.stop()
+
+        def th_func():
+            return current_model.delete_model()
+
+        album_model = self.screen_controller.model
+        current_model = album_model.children[album_model.current]
+
+        self.start()
+        if album_model.current > 0:
+            self.screen_controller.prev()
+        else:
+            if album_model.current < album_model.size -1:
+                self.screen_controller.next()
+
+        album_model.size -= 1
+        album_model.children.remove(current_model)
+        self.screen_controller._check_prev_next_visibility()
+
+        ThreadedFunction(th_finished, th_func).start()
+
 BasicPanel = manager.get_class("Controller/BasicPanel")
 BaseScrollableText = manager.get_class("Widget/ScrollableTextBlock")
 

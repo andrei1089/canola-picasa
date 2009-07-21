@@ -146,6 +146,12 @@ class PicasaManager(Singleton):
             return ret
         return False
 
+    def delete_photo(self, photo):
+        try:
+            return self.gd_client.Delete(photo)
+        except:
+            return False
+
     def get_photos_from_album(self, album_id, user = None) :
         if not user:
             user = self.user
