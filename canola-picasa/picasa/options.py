@@ -494,7 +494,6 @@ class AlbumAccessFolderController(CheckListPanelController):
             return self.model.update(new_access)
 
         def th_finished(exception, retval):
-            print "th_finished"
             self.view_wait.hide()
             self.view.hide()
             self.back()
@@ -634,9 +633,12 @@ class FullScreenDeletePicOptionsController(ModalController):
                 self.screen_controller.next()
 
         album_model.size -= 1
+        album_model.prop["cntPhotos"] = str(album_model.size)
+
         album_model.children.remove(current_model)
         self.screen_controller._check_prev_next_visibility()
 
+        album_model.parent.callback_update_list(current_model)
         ThreadedFunction(th_finished, th_func).start()
 
 BasicPanel = manager.get_class("Controller/BasicPanel")

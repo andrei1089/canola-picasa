@@ -158,8 +158,9 @@ class GeneralRowRenderer(PluginThemeMixin, BaseRowRenderer):
 
     def value_set(self, model):
         """Apply the model properties to the renderer."""
-        if not model or model is self._model:
-            return
+        #TODO: should?? set an "updated" flag for model to avoid the update of all models
+        #if not model or model is self._model:
+        #    return
 
         self._model = model
         self.part_text_set("album_title", model.prop["album_title"])
@@ -208,6 +209,11 @@ class ServiceController(BaseListController, OptionsControllerMixin):
         BaseListController.__init__(self, model, canvas, parent)
         OptionsControllerMixin.__init__(self)
         self.model.callback_notify = self._show_notify
+        self.model.callback_update_list = self._update_ui
+
+    def _update_ui(self, model):
+        print "!!!! update ui"
+        self.view.model_updated()
 
     def _show_notify(self, err):
         """Popup a modal with a notify message."""

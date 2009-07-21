@@ -137,6 +137,7 @@ class AlbumServiceModelFolder(ModelFolder):
     def __init__(self, name, parent, prop, community=False):
         self.prop = prop
         self.callback_notify = None
+        self.callback_update_list = None
         self.size = 0
         self.community = community
 
@@ -698,8 +699,7 @@ class ChangeAlbumNameOptionModel(Model):
     def update_value(self, new_value):
         if picasa_manager.update_title(self.album_prop["album_id"], new_value):
             self.album_prop["album_title"] = new_value
-            #TODO: update model
-            self.album_model.notify_model_changed()
+            self.album_model.parent.callback_update_list(self.album_model)
             return True
         else:
             return False
@@ -719,7 +719,7 @@ class ChangeAlbumDescriptionOptionModel(Model):
     def update_value(self, new_value):
         if picasa_manager.update_desc(self.album_prop["album_id"], new_value):
             self.album_prop["description"] = new_value
-            #TODO: update model
+            self.album_model.parent.callback_update_list(self.album_model)
             return True
         else:
             return False
@@ -964,7 +964,7 @@ class AlbumAccessModelFolder(ModelFolder):
     def update(self, new_access):
         picasa_manager.update_access(self.album_prop["album_id"], new_access)
         self.album_prop["access"] = new_access
-        #TODO: update model
+        self.album_model.parent.callback_update_list(self.album_model)
 
     def do_unload(self):
         self.current = None
