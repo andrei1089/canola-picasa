@@ -498,17 +498,16 @@ class ImageInternalScreen(PluginThemeMixin, Screen):
 
     def ImageFrameInternal(self, theme=None):
         return ImageFrameInternal(self.evas, self, theme)
-    
+
     def _setup_gui(self):
         self.image_box = ImageBoxContainer(self, hpadding=40, valign=0.2)
         self.part_swallow("contents", self.image_box)
- 
+
     def model_updated(self, message):
         if message:
             if self.image_box:
                 self.image_box.delete()
                 self.image_box = None
-            print "showing message"
             self.part_text_set("message", "No pictures found.")
             self.signal_emit("message,show", "")
 

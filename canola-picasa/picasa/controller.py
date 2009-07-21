@@ -212,7 +212,6 @@ class ServiceController(BaseListController, OptionsControllerMixin):
         self.model.callback_update_list = self._update_ui
 
     def _update_ui(self, model):
-        print "!!!! update ui"
         self.view.model_updated()
 
     def _show_notify(self, err):

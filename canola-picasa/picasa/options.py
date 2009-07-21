@@ -618,6 +618,21 @@ class FullScreenDeletePicOptionsController(ModalController):
                 self.update_text("ERROR!")
                 ecore.timer_add(2, hide_cb)
                 return
+
+            if album_model.current > 0:
+                self.screen_controller.prev()
+            else:
+                if album_model.current < album_model.size -1:
+                    self.screen_controller.next()
+
+            album_model.size -= 1
+            album_model.prop["cntPhotos"] = str(album_model.size)
+
+            album_model.children.remove(current_model)
+            self.screen_controller._check_prev_next_visibility()
+
+            album_model.parent.callback_update_list(current_model)
+
             self.stop()
 
         def th_func():
@@ -627,19 +642,6 @@ class FullScreenDeletePicOptionsController(ModalController):
         current_model = album_model.children[album_model.current]
 
         self.start()
-        if album_model.current > 0:
-            self.screen_controller.prev()
-        else:
-            if album_model.current < album_model.size -1:
-                self.screen_controller.next()
-
-        album_model.size -= 1
-        album_model.prop["cntPhotos"] = str(album_model.size)
-
-        album_model.children.remove(current_model)
-        self.screen_controller._check_prev_next_visibility()
-
-        album_model.parent.callback_update_list(current_model)
         ThreadedFunction(th_finished, th_func).start()
 
 BasicPanel = manager.get_class("Controller/BasicPanel")
