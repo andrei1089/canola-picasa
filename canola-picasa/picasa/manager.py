@@ -138,12 +138,14 @@ class PicasaManager(Singleton):
         return None
 
     def delete_album(self, id):
-        albums = self.get_user_albums()
         album = self._get_album_from_id(id)
         if album is not None:
-            ret = self.gd_client.Delete(album)
-            self.refresh_user_albums(self.user)
-            return ret
+            try:
+                ret = self.gd_client.Delete(album)
+                self.refresh_user_albums(self.user)
+                return ret
+            except:
+                return False
         return False
 
     def delete_photo(self, photo):

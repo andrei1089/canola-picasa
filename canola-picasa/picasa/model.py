@@ -70,7 +70,6 @@ class MainModelFolder(ModelFolder, Task):
                 log.info("model is not loading")
                 return
 
-            #TODO:display specific error messages
             if exception is not None or not picasa_manager.is_logged():
                 msg = "Login error, please check your account details"
                 log.error(exception)
@@ -185,9 +184,8 @@ class AlbumServiceModelFolder(ModelFolder):
             return self.do_search()
 
         def refresh_finished(exception, retval):
-            #TODO: get specific error
             if exception is not None:
-                msg = "ERROR!"
+                msg = "ERROR!<br> %s" % exception
                 log.error(exception)
 
                 if self.callback_notify:
@@ -201,7 +199,6 @@ class AlbumServiceModelFolder(ModelFolder):
         self.size = 0
         self.is_loading = True
         ThreadedFunction(refresh_finished, refresh).start()
-        #refresh_finished(None, self.do_search())
 
     def delete_model(self):
         if self.community:
@@ -211,7 +208,6 @@ class AlbumServiceModelFolder(ModelFolder):
             action = picasa_manager.delete_album(self.prop["album_id"])
             log.debug("deleting album with id: %s, operation result: %s" % \
                                                 (self.prop["album_id"], action))
-            #TODO: catch exception
             return action
 
     def options_model_get(self, controller):
