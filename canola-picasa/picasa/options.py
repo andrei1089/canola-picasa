@@ -546,7 +546,8 @@ class FullScreenUploadAllController(ModalController):
         model.callback_unlocked = self.stop
         model.callback_refresh = self.update_text
 
-        self.view = MessageView(parent.last_panel, "uploading<br> xx% done<br> 1 of 5 uploaded")
+        self.view = MessageView(parent.last_panel,\
+                                "uploading<br> xx% done<br> 1 of 5 uploaded")
         self.model.execute()
 
     def start(self):
@@ -652,12 +653,14 @@ class ScrollableTextBlock(PluginThemeMixin, BaseScrollableText):
 class FullScreenImageInfoOptionsController(BasicPanel):
     terra_type = "Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaImageInfo"
 
-    def __init__(self, model, canvas, parent, theme=None, edje_group="panel_info_picasa"):
+    def __init__(self, model, canvas, parent, theme=None,\
+                                               edje_group="panel_info_picasa"):
         BasicPanel.__init__(self, model, canvas, parent)
 
         self.thumbnail = evas.FilledImage(canvas)
 
-        self._body = PluginEdjeWidget(self.view.evas, edje_group, self.view, plugin="picasa")
+        self._body = PluginEdjeWidget(self.view.evas, edje_group,\
+                                                    self.view, plugin="picasa")
 
         self.description = ScrollableTextBlock(self.view.evas, self.view)
         self._body.part_swallow("description", self.description)
@@ -683,10 +686,12 @@ class FullScreenImageInfoOptionsController(BasicPanel):
         self._body.part_swallow("contents", self.thumbnail)
 
         text = ""
-        if  self.image_data.summary is not None and self.image_data.summary.text is not None:
+        if  self.image_data.summary is not None and\
+                                    self.image_data.summary.text is not None:
             text = "Description:<br>" + self.image_data.summary.text + "<br>"
 
-        if self.image_data.media.keywords is not None and self.image_data.media.keywords.text is not None:
+        if self.image_data.media.keywords is not None and\
+                                self.image_data.media.keywords.text is not None:
             text = text + "Tags:<br>"
             text = text + self.image_data.media.keywords.text.replace(", ", "<br>") + "<br>"
 

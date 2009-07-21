@@ -240,7 +240,8 @@ class CommunityAlbumModel(AlbumServiceModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album/CommunityAlbum"
 
     def do_search(self):
-        return picasa_manager.get_photos_from_album(self.prop["album_id"], self.prop["album_user"]);
+        return picasa_manager.get_photos_from_album(self.prop["album_id"], \
+                                                       self.prop["album_user"]);
 
 class CommunitySearchTag(AlbumServiceModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album/SearchTag"
@@ -251,7 +252,8 @@ class CommunitySearchTag(AlbumServiceModelFolder):
 
     def do_search(self):
         print "community do_search"
-        return picasa_manager.gd_client.SearchCommunityPhotos(self.dialog_response, limit='30')
+        return picasa_manager.gd_client.SearchCommunityPhotos( \
+                                            self.dialog_response, limit='30')
 
 class CommunityFeatured(AlbumServiceModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album/Featured"
@@ -756,7 +758,8 @@ class FullScreenUploadAlbumModel(OptionsActionModel):
                     return (False, "Cannot create new album")
             self.album_id = res.gphoto_id.text
 
-        return picasa_manager.upload_picture(self.parent.image_path, self.album_id)
+        return picasa_manager.upload_picture(self.parent.image_path,\
+                                                            self.album_id)
 
     def execute(self):
         def upload_finished(exception, retval):
@@ -765,7 +768,8 @@ class FullScreenUploadAlbumModel(OptionsActionModel):
             ret, error = retval
             if not ret:
                 self.callback_refresh("FAILED!<br>%s" % error[2])
-                log.error("Failed to upload picture %s, exception: %s" % (self.parent.image_path, error))
+                log.error("Failed to upload picture %s, exception: %s" % \
+                                                (self.parent.image_path, error))
                 ecore.timer_add(1, self.callback_unlocked)
                 return
             self.callback_unlocked()
@@ -837,8 +841,10 @@ class FullScreenUploadAllOptions(OptionsActionModel):
             cnt+=1
             log.info("Uploading picture %s" % image.path)
             if not ret:
-                log.error("Failed to upload picture %s, exception: %s" % (image.path, error))
-                return (False, "Failed to upload<br>picture %d <br> %s" % (cnt, error[2]) )
+                log.error("Failed to upload picture %s, exception: %s" % \
+                                                        (image.path, error))
+                return (False, "Failed to upload<br>picture %d <br> %s" % \
+                                                        (cnt, error[2]) )
             self.callback_refresh("uploading<br>%s of %s done" % (cnt, total))
         return (True, None)
 
@@ -863,12 +869,14 @@ class FullScreenAddCommentOptions(Model):
 
     def __init__(self, parent=None):
         #comments can't be posted without being logged
-        if not isinstance(parent.screen_controller.model, AlbumServiceModelFolder) or not picasa_manager.is_logged():
+        if not isinstance(parent.screen_controller.model,\
+                    AlbumServiceModelFolder) or not picasa_manager.is_logged():
             return
         Model.__init__(self, self.title, parent)
 
     def add_comment(self, comment):
-        image_model =  self.parent.screen_controller.model.children[self.parent.screen_controller.model.current]
+        album_model = self.parent.screen_controller.model
+        image_model = album_model.children[album_model.current]
         return picasa_manager.add_comment(image_model.image, comment)
 
 class FullScreenOptions(OptionsModelFolder):
@@ -881,7 +889,8 @@ class FullScreenImageInfoOptions(FullScreenOptions):
     title = "Image Info"
 
     def __init__(self, parent, screen_controller=None):
-        if not isinstance(parent.screen_controller.model, AlbumServiceModelFolder):
+        if not isinstance(parent.screen_controller.model,\
+                                                    AlbumServiceModelFolder):
             return
         FullScreenOptions.__init__(self, parent, screen_controller)
 
@@ -900,7 +909,8 @@ class FullScreenCommentListOptions(FullScreenOptions):
     title = "Comments"
 
     def __init__(self, parent, screen_controller=None):
-        if not isinstance(parent.screen_controller.model, AlbumServiceModelFolder):
+        if not isinstance(parent.screen_controller.model,\
+                                                AlbumServiceModelFolder):
             return
         FullScreenOptions.__init__(self, parent, screen_controller)
 
@@ -926,7 +936,8 @@ class FullScreenDeletePicOptions(OptionsActionModel):
     name = "Delete picture"
 
     def __init__(self, parent=None):
-        if not isinstance(parent.screen_controller.model, AlbumServiceModelFolder):
+        if not isinstance(parent.screen_controller.model,\
+                                                    AlbumServiceModelFolder):
             return
         #can't delete pictures from community albums
         if parent.screen_controller.model.community:

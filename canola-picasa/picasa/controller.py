@@ -140,7 +140,7 @@ class GeneralRowRenderer(PluginThemeMixin, BaseRowRenderer):
                 self._model.parent.callback_state_changed(self._model.parent)
 
                 self._model.parent.children.remove(self._model)
-            
+
             self.delete_button.signal_emit("unblock,events", "")
             self.delete_button.state_set(ActionButton.STATE_TRASH)
 
@@ -199,7 +199,7 @@ class RowRendererWidget(GeneralRowRenderer):
 class ServiceController(BaseListController, OptionsControllerMixin):
     """Picasa Album List.
 
-    This list is like a page result that shows the details for each album. 
+    This list is like a page result that shows the details for each album.
     """
     terra_type = "Controller/Folder/Task/Image/Picasa/Service"
     row_renderer = RowRendererWidget
@@ -245,10 +245,11 @@ class MainController(BaseListController):
                 BaseListController.cb_on_clicked(self, view, index)
             else:
                 self._show_notify(CanolaError("Empty input"))
-        
+
         try:
             if model.show_dialog:
-                dialog = EntryDialogModel(model.dialog_title, model.dialog_msg, answer_callback=do_search)
+                dialog = EntryDialogModel(model.dialog_title, model.dialog_msg,\
+                                                    answer_callback=do_search)
                 self.parent.show_notify(dialog)
         except:
             BaseListController.cb_on_clicked(self, view, index)
@@ -288,7 +289,7 @@ class AlbumGridController(Controller, OptionsControllerMixin):
 
         self._check_model_loaded()
         OptionsControllerMixin.__init__(self)
-        
+
         try:
             self.thumbler = thumbnailer.CanolaThumbnailer()
         except RuntimeError, e:
@@ -412,7 +413,7 @@ class ImageInternalController(Controller):
         self.model.changed_callback_add(self._update_ui)
 
         self.model.load()
- 
+
         self._create_view()
 
     def _create_view(self):
@@ -1035,9 +1036,9 @@ class ImageFullscreenController(Controller, OptionsControllerMixin):
         try:
             if self.slideshow_random:
                 prev = \
-                            self.slideshow_random_list[self.slideshow_random_idx - 1][1]
+                    self.slideshow_random_list[self.slideshow_random_idx - 1][1]
                 next = \
-                            self.slideshow_random_list[self.slideshow_random_idx + 1][1]
+                    self.slideshow_random_list[self.slideshow_random_idx + 1][1]
             else:
                 prev = self.model.prev_get()
                 next = self.model.next_get()
@@ -1125,7 +1126,7 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
 
     def __init__(self, model, canvas, parent):
         Controller.__init__(self, model, canvas, parent)
- 
+
         self.threshold_w = 0
         self.row_limit_intervals = []
         self.row_intervals = []
@@ -1164,7 +1165,8 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
         self.view.callback_move_offset = self._cb_move_offset
         self.view.callback_resized = self._layout_view
         self.view.callback_on_theme_changed = self.cb_on_theme_changed
-        self.view.callback_transition_in_finished = self.cb_on_transition_in_finished
+        self.view.callback_transition_in_finished = \
+                                        self.cb_on_transition_in_finished
 
     def _setup_model(self):
         self.model.callback_loaded = self._model_loaded
@@ -1174,7 +1176,7 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
        #TODO: fix this
         x, y, w, h = self.layout_values
         self._layout_view(x, y, w, h)
-        
+
         self.view.loaded()
         model.callback_loaded = None
 
@@ -1193,10 +1195,11 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
         max_rows = self._calc_max_rows(h, self.fixed_height)
 
         num_rows, row_width = self._calc_rows_num_width(max_rows,
-                                                        self.model._sum_thumb_width,
+                                               self.model._sum_thumb_width,
                                                         w)
 
-        log.debug("number of rows in thumb grid = %s, row_width = %s" % (num_rows, row_width))
+        log.debug("number of rows in thumb grid = %s, row_width = %s" % \
+                                                    (num_rows, row_width))
 
         if num_rows <= 0:
             return
@@ -1375,7 +1378,7 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
             model.thumb_path = model.thumb_save_path
             if model.image_frame:
                 self.load_list_enqueue(model.image_frame)
-            
+
             self.thumb_request_idler = None
             self.idler_thumb_request_add()
 
@@ -1383,7 +1386,7 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
             model.thumb_path = model.thumb_save_path
             if model.image_frame:
                 self.load_list_enqueue(model.image_frame)
- 
+
             self.thumb_request_idler = None
             self.idler_thumb_request_add()
 
