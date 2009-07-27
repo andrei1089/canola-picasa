@@ -24,6 +24,9 @@ import thumbnailer
 import epsilon
 
 from time import time
+
+from utils import *
+
 from manager import PicasaManager
 
 from terra.core.task import Task
@@ -40,7 +43,9 @@ picasa_manager = PicasaManager()
 PluginDefaultIcon = manager.get_class("Icon/Plugin")
 OptionsActionModel = manager.get_class("Model/Options/Action")
 OptionsModelFolder = manager.get_class("Model/Options/Folder")
+
 CanolaError = manager.get_class("Model/Notify/Error")
+EntryDialogModel = manager.get_class("Model/EntryDialog")
 
 log = logging.getLogger("plugins.canola-picasa.model")
 
@@ -87,6 +92,7 @@ class MainModelFolder(ModelFolder, Task):
             CommunitySearchTag("Search by tag", self, None, True)
             CommunityFeatured("Featured pictures", self, None, True)
             CommunityLocationName("Search by location name", self, None, True)
+            GPSSearch(self)
 
             if end_callback:
                 end_callback()
@@ -250,6 +256,89 @@ class CommunitySearchTag(AlbumServiceModelFolder):
         print "community do_search"
         return picasa_manager.gd_client.SearchCommunityPhotos( \
                                             self.dialog_response, limit='30')
+
+class GPSSearch(ModelFolder):
+    terra_type = "Model/Folder/Image/Picasa/GPSSearch"
+
+    def __init__(self, parent):
+        ModelFolder.__init__(self, "Search by GPS location", parent)
+        self.gps_coord = None
+
+    def do_load(self):
+        CommunityGPSManual("Enter GPS location", self, None, True)
+        UpdateGPS("Update GPS location", self)
+        CommunityGPS("Current GPS location", self, None, True)
+
+class UpdateGPS(Model):
+    terra_type = "Model/Folder/Image/Picasa/GPSSearch/Update"
+
+    def __init__(self, name, parent):
+        Model.__init__(self, name, parent)
+
+    def load(self):
+        print "updating gps location"
+
+class CommunityGPSManual(AlbumServiceModelFolder):
+    terra_type = "Model/Folder/Image/Picasa/Service/Album/GPSManual"
+    dialog_title = "GPS Coordonates"
+    dialog1_msg = "Enter latitude:"
+    dialog2_msg = "Enter longitude:"
+    dialog3_msg = "Enter radius:"
+    dialog_error = "Invalid coordinates"
+    lat = None
+    long = None
+    radius = None
+
+
+    def do_search(self):
+        bbox =  "%f,%f,%f,%f" % self.rectangle
+        return picasa_manager.gd_client.GetFeed("/data/feed/api/all?max-results=50&bbox=%s" % bbox, limit='30')
+
+
+    def show_dialog2(self, parent, text):
+        self.lat = text
+        dialog = EntryDialogModel(self.dialog_title, self.dialog2_msg, answer_callback=self.show_dialog3)
+        self.parent.show_notify(dialog)
+
+    def show_dialog3(self, parent, text):
+        self.long = text
+        dialog = EntryDialogModel(self.dialog_title, self.dialog3_msg, answer_callback=self.show_dialog_finish)
+        self.parent.show_notify(dialog)
+
+    def show_dialog_finish(self, parent, text):
+        self.radius = text
+
+        #check if input is valid
+        if gps_valid_coord(self.lat, "lat") and gps_valid_coord(self.long, "long") and gps_valid_coord(self.radius) and float(self.radius) > 0:
+            self.lat = float(self.lat)
+            self.long = float(self.long)
+            self.radius = float(self.radius)
+        else:
+            dialog = CanolaError(self.dialog_error)
+            self.parent.show_notify(dialog)
+            return
+
+        #compute search rectangle based on lat, long, radius
+        self.rectangle = gps_get_rectangle(self.lat, self.long, self.radius)
+        self.callback_finished()
+
+    def show_dialog(self):
+        dialog = EntryDialogModel(self.dialog_title, self.dialog1_msg, answer_callback=self.show_dialog2)
+        self.parent.show_notify(dialog)
+
+class CommunityGPS(AlbumServiceModelFolder):
+    terra_type = "Model/Folder/Image/Picasa/Service/Album/GPS"
+
+    def do_search(self):
+        print "GPS do_search"
+        return None
+
+    def show_dialog(self):
+        if self.parent.gps_coord is None:
+            self.parent.show_notify(CanolaError("No GPS location. Click Update GPS location first"))
+            self.next_screen = False
+        else:
+            self.next_screen = True
 
 class CommunityFeatured(AlbumServiceModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album/Featured"

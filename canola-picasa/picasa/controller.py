@@ -29,7 +29,7 @@ from terra.core.controller import Controller
 from terra.core.threaded_func import ThreadedFunction
 
 #TODO: remove this after removing ImageFullscreenController
-from terra.core.model import ModelFolder
+from terra.core.model import ModelFolder, Model
 from terra.core.plugin_prefs import PluginPrefs
 from efl_utils.animations import DecelerateTimelineAnimation \
                                         as TimelineAnimation
@@ -252,6 +252,30 @@ class MainController(BaseListController):
                 self.parent.show_notify(dialog)
         except:
             BaseListController.cb_on_clicked(self, view, index)
+
+class GPSSearchController(BaseListController):
+    terra_type = "Controller/Folder/Image/Picasa/GPSSearch"
+
+    def __init__(self, model, canvas, parent):
+        model.show_notify = self._show_notify
+        BaseListController.__init__(self, model, canvas, parent)
+
+    def _show_notify(self, err):
+        """Popup a modal with a notify message."""
+        self.parent.show_notify(err)
+
+    def cb_on_clicked(self, view, index):
+        def click_callback():
+            print "callback finished"
+            BaseListController.cb_on_clicked(self, view, index)
+
+        model = self.model.children[index]
+        model.callback_finished = click_callback
+        try:
+            if model.show_dialog:
+                model.show_dialog()
+        except:
+            self._show_notify(CanolaError("ERROR!"))
 
 class AlbumController(Controller):
     terra_type = "Controller/Folder/Image/Picasa/Service/Album"

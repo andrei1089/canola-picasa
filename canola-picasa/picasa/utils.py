@@ -1,6 +1,8 @@
 import logging
 import os.path
 
+from math import cos, pi
+
 from terra.core.manager import Manager
 from terra.ui.grid import CellRenderer
 from terra.ui.base import EdjeWidget
@@ -49,4 +51,40 @@ def download_file(model, path, url, callback_exists=None, \
         if callback_exists:
             callback_exists()
     model.__setattr__(attr, downloader)
+
+def gps_valid_coord(value, type=None):
+    try:
+        value = float(value)
+    except ValueError:
+        return False
+
+    if type == "lat":
+        return value >= -90 and value <= 90
+    elif type == "long":
+        return value >= -180 and value <= 180
+    return True
+
+def gps_get_rectangle(lat, long, radius):
+    #diference in km for one degree in latitude, almost constant
+    diff_lat = 111.0
+
+    #diference in km for one degree in longitude, decreasing as
+    #we aproach the poles
+    diff_long = 111.320 * cos(pi*lat/180)
+
+    diff_degree_lat = radius / diff_lat
+    diff_degree_long = radius / diff_long
+
+    #coordinates of corners
+    W = long - diff_degree_long
+    S = lat - diff_degree_lat
+    E = long + diff_degree_long
+    N = lat + diff_degree_lat
+
+    return (W,S,E,N)
+
+
+
+
+
 
