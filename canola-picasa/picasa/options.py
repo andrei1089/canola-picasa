@@ -21,6 +21,7 @@ import logging
 from time import gmtime, strftime
 
 from terra.core.manager import Manager
+from terra.core.terra_object import TerraObject
 from terra.core.threaded_func import ThreadedFunction
 from terra.ui.modal import Modal
 from terra.ui.throbber import EtkThrobber
@@ -511,8 +512,10 @@ class FullScreenUploadAlbumController(ModalController):
 
         model.callback_locked = self.start
         model.callback_unlocked = self.stop
-        model.callback_refresh = self.update_text
+        model.callback_refresh = self._update_text
+        model.callback_show_error = self._show_error
 
+        self.parent = parent
         self.view = MessageView(parent.last_panel, "uploading")
         self.model.execute()
 
@@ -521,14 +524,18 @@ class FullScreenUploadAlbumController(ModalController):
         self.model.callback_locked = None
 
     def stop(self):
-        def cb():
-            #TODO: hide options menu - doesn't work now!
-            self.parent.back()
+        self.view.hide()
 
-        self.view.hide(cb)
-
-    def update_text(self, text):
+    def _update_text(self, text):
         self.view.throbber.text_set(text)
+
+    def _show_error(self, error):
+        self.view.hide()
+        self.view.delete()
+        self.view = ModalMessage(self.parent.last_panel, error)
+        self.view.callback_clicked = self.stop
+
+        self.view.show()
 
     def delete(self):
         self.view.delete()
@@ -546,21 +553,37 @@ class FullScreenUploadAllController(ModalController):
         model.callback_locked = self.start
         model.callback_unlocked = self.stop
         model.callback_refresh = self.update_text
+        model.callback_check_cancel = self._cancel_pressed
+        model.callback_show_error = self._show_error
 
-        self.view = MessageView(parent.last_panel,\
+        self.parent = parent
+        self.cancel = False
+
+        self.view = ModalThrobber(parent.last_panel,\
                                 "uploading<br> xx% done<br> 1 of 5 uploaded")
+        self.view.callback_clicked = self._on_cancel
         self.model.execute()
 
+    def _show_error(self, error):
+        self.view.hide()
+        self.view.delete()
+        self.view = ModalMessage(self.parent.last_panel, error)
+        self.view.callback_clicked = self.stop
+
+        self.view.show()
+
+    def _on_cancel(self):
+        self.cancel = True
+
+    def _cancel_pressed(self):
+        return self.cancel
+
     def start(self):
-        self.view.message(hide_cb=self.stop)
+        self.view.show()
         self.model.callback_locked = None
 
     def stop(self):
-        def cb():
-            #TODO: hide options menu - doesn't work now!
-            self.parent.back()
-
-        self.view.hide(cb)
+        self.view.hide()
 
     def update_text(self, text):
         self.view.throbber.text_set(text)
@@ -878,3 +901,154 @@ class FullScreenAddCommentOptionsController(ModalController):
         self.view.delete()
         self.view = None
         self.model = None
+
+
+class ModalThrobber(Modal, TerraObject):
+
+    def __init__(self, parent, message,
+                 has_cancel=True, theme=None, hborder=50, vborder=125):
+        Modal.__init__(self, parent.view, "", parent.view.theme, hborder, vborder)
+        self.has_cancel = has_cancel
+        self._init_embed()
+        self.message = message
+        self.callback_escape = None
+        self.callback_clicked = None
+
+    def _init_embed(self):
+        self.embed = etk.Embed(self.evas)
+
+        self.vbox = etk.VBox()
+        self.vbox.border_width = 25
+
+        self.throbber = EtkThrobber("")
+        self.throbber.show()
+        self.throbber_align = etk.Alignment(0.5, 0.4, 0.0, 0.0,
+                                            child=self.throbber)
+        self.throbber_align.show()
+        self.throbber.start()
+
+        self.vbox.append(self.throbber_align, etk.VBox.START, etk.VBox.FILL, 0)
+
+        if self.has_cancel:
+            self.button = etk.Button(label="   Cancel   ")
+            self.button.on_clicked(self.clicked)
+            self.button.show()
+            self.button_align = etk.Alignment(0.5, 0.5, 0.0, 0.0, child=self.button)
+            self.button_align.show()
+
+            self.vbox.append(self.button_align, etk.VBox.END, etk.VBox.FILL, 0)
+
+        self.vbox.show()
+
+        self.embed.on_key_down(self._key_down_cb)
+        self.embed.on_key_up(self._key_up_cb)
+
+        self.embed.add(self.vbox)
+        self.embed.show()
+        self.contents_set(self.embed.object)
+
+    def show_message(self, error):
+        self.label = etk.Label(error)
+        self.label.show()
+        self.label_align = etk.Alignment(0.5, 0.4, 0.0, 0.0,
+                                            child=self.label)
+        self.label_align.show()
+        self.vbox.prepend(self.label_align, etk.VBox.START, etk.VBox.FILL, 0)
+
+    def _message_set(self, value):
+        self.throbber.text = value
+
+    def _message_get(self):
+        return self.throbber.text
+
+    message = property(_message_get, _message_set)
+
+    def clicked(self, *ignored):
+        if self.callback_clicked:
+            self.callback_clicked()
+        self.button.hide()
+
+    def _key_down_cb(self, o, ev):
+        return self.handle_key_down(ev)
+
+    def _key_up_cb(self, o, ev):
+        return self.handle_key_up(ev)
+
+    def handle_key_down(self, ev):
+        if ev.key == "Escape":
+            if self.callback_clicked:
+                self.callback_clicked()
+            return False
+        return True
+
+    def handle_key_up(self, ev):
+        return True
+
+    @evas.decorators.focus_in_callback
+    def _focus_in(self):
+        self.embed.object.focus = True
+        self.do_on_focus()
+
+    def do_on_focus(self):
+        pass
+
+    @evas.decorators.del_callback
+    def _destroy_contents(self):
+        self.embed.destroy()
+
+
+
+class ModalMessage(Modal, TerraObject):
+    terra_type = "Widget/Settings/ModalThrobber"
+
+    def __init__(self, parent, message,
+                 has_button=True, theme=None, hborder=50, vborder=125):
+        Modal.__init__(self, parent.view, "", parent.view.theme, hborder, vborder)
+        self.has_button = has_button
+        self.message = message
+        self.callback_clicked = None
+        self._init_embed()
+
+    def _init_embed(self):
+        self.embed = etk.Embed(self.evas)
+
+        self.vbox = etk.VBox()
+        self.vbox.border_width = 25
+
+        self.label = etk.Label(self.message)
+        self.label.show()
+        self.label_align = etk.Alignment(0.5, 0.4, 0.0, 0.0,
+                                            child=self.label)
+        self.label_align.show()
+        self.vbox.append(self.label_align, etk.VBox.START, etk.VBox.FILL, 0)
+
+        if self.has_button:
+            self.button = etk.Button(label="   OK   ")
+            self.button.on_clicked(self.clicked)
+            self.button.show()
+            self.button_align = etk.Alignment(0.5, 0.5, 0.0, 0.0, child=self.button)
+            self.button_align.show()
+
+            self.vbox.append(self.button_align, etk.VBox.END, etk.VBox.FILL, 0)
+
+        self.vbox.show()
+
+        self.embed.add(self.vbox)
+        self.embed.show()
+        self.contents_set(self.embed.object)
+
+    def clicked(self, *ignored):
+        if self.callback_clicked:
+            self.callback_clicked()
+
+    @evas.decorators.focus_in_callback
+    def _focus_in(self):
+        self.embed.object.focus = True
+        self.do_on_focus()
+
+    def do_on_focus(self):
+        pass
+
+    @evas.decorators.del_callback
+    def _destroy_contents(self):
+        self.embed.destroy()

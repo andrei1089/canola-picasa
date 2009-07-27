@@ -875,17 +875,16 @@ class FullScreenUploadAlbumModel(OptionsActionModel):
                 log.error(exception)
             ret, error = retval
             if not ret:
-                self.callback_refresh("FAILED!<br>%s" % error[2])
+                self.callback_show_error("FAILED!<br>%s" % error[2])
                 log.error("Failed to upload picture %s, exception: %s" % \
                                                 (self.parent.image_path, error))
-                ecore.timer_add(1, self.callback_unlocked)
                 return
-            self.callback_unlocked()
+            else:
+                self.callback_unlocked()
 
         self.callback_refresh("uploading")
         self.callback_locked()
         ThreadedFunction(upload_finished, self.upload).start()
-
 
 class UploadLoginFailedOptionModel(OptionsActionModel):
     name = "Failed to login"
@@ -929,6 +928,10 @@ class FullScreenUploadAllOptions(OptionsActionModel):
         if isinstance(parent.screen_controller.model, AlbumServiceModelFolder):
             return
         OptionsActionModel.__init__(self, parent)
+        self.callback_check_cancel = None
+        self.callback_show_error = None
+        self.callback_unlocked = None
+        self.callback_locked = None
 
     def upload(self):
         album_model = self.screen_controller.model
@@ -948,13 +951,17 @@ class FullScreenUploadAllOptions(OptionsActionModel):
         self.callback_refresh("uploading<br>0 of %s done" % total)
 
         for image in album_model.children:
+            #user stopped the upload
+            if self.callback_check_cancel():
+                return (True, None)
+
             ret, error = picasa_manager.upload_picture(image.path, album_id)
             cnt+=1
             log.info("Uploading picture %s" % image.path)
             if not ret:
                 log.error("Failed to upload picture %s, exception: %s" % \
                                                         (image.path, error))
-                return (False, "Failed to upload<br>picture %d <br> %s" % \
+                return (False, "Failed to upload picture %d<br>%s" % \
                                                         (cnt, error[2]) )
             self.callback_refresh("uploading<br>%s of %s done" % (cnt, total))
         return (True, None)
@@ -965,10 +972,10 @@ class FullScreenUploadAllOptions(OptionsActionModel):
                 log.error(exception)
             res, error = retval
             if not res:
-                self.callback_refresh(error)
-                ecore.timer_add(1, self.callback_unlocked)
+                self.callback_show_error(error)
                 return
-            self.callback_unlocked()
+            else:
+                self.callback_unlocked()
 
         self.callback_refresh("uploading")
         self.callback_locked()
