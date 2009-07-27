@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 group {
    name: "icon/main_item/picasa";
-   images.image: "images/ico_picasa_teme04.png" COMP;
+   images.image: "images/ico_photo_picasa.png" COMP;
    parts {
       part {
          name: "icon";
@@ -33,7 +33,7 @@ group {
                relative: 1.0 1.0;
                offset: -1 -1;
             }
-            image.normal: "images/ico_picasa_teme04.png";
+            image.normal: "images/ico_photo_picasa.png";
          }
       }
    }
