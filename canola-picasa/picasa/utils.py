@@ -1,4 +1,5 @@
 import logging
+import datetime
 import os.path
 
 from math import cos, pi
@@ -83,8 +84,38 @@ def gps_get_rectangle(lat, long, radius):
 
     return (W,S,E,N)
 
+def parse_timestamp(timestamp):
+    """ Convert internet timestamp (RFC 3339) into a Python datetime
+    object.
+    """
+    date_str = None
+    hour = None
+    minute = None
+    second = None
 
+    if timestamp.count('T') > 0:
+        date_str, time_str = timestamp.split('T')
+        time_str = time_str.split('.')[0]
+        if time_str.find(':') >= 0:
+            hour, minute, second = time_str.split(':')
+            if second.endswith('Z'):
+                second = second[:-1]
+        else:
+            hour, minute, second = (time_str[0:2], time_str[2:4], time_str[4:6])
+    else:
+        date_str = timestamp
+        hour, minute, second = 0, 0, 0
 
+    if date_str.find('-') >= 0:
+        year, month, day = date_str.split('-')
+    else:
+        year, month, day = (date_str[0:4], date_str[4:6], date_str[6:8])
 
+    year = int(year)
+    month = int(month)
+    day = int(day)
+    hour = int(hour)
+    minute = int(minute)
+    second = int(second)
 
-
+    return datetime.datetime(year, month, day, hour, minute, second)

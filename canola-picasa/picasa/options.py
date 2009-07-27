@@ -28,6 +28,7 @@ from terra.ui.panel import PanelContentFrame
 from terra.ui.base import PluginEdjeWidget
 from terra.ui.base import PluginThemeMixin
 from manager import PicasaManager
+from utils import parse_timestamp
 
 manager = Manager()
 picasa_manager = PicasaManager()
@@ -683,24 +684,28 @@ class FullScreenImageInfoOptionsController(BasicPanel):
             date_taken = "N/A"
 
         self._body.part_text_set("title", title)
-        self._body.part_text_set("author", "From " + author)
+        self._body.part_text_set("author", "By " + author)
         self._body.part_text_set("date_taken", "Taken on " + date_taken )
         self._body.part_swallow("contents", self.thumbnail)
 
         text = ""
         if  self.image_data.summary is not None and\
                                     self.image_data.summary.text is not None:
-            text = "Description:<br>" + self.image_data.summary.text + "<br>"
+            text = "Description:" + self.image_data.summary.text + "<br>"
 
         if self.image_data.media.keywords is not None and\
                                 self.image_data.media.keywords.text is not None:
-            text = text + "Tags:<br>"
-            text = text + self.image_data.media.keywords.text.replace(", ", "<br>") + "<br>"
+            text = text + "Tags:"
+            text = text + self.image_data.media.keywords.text + "<br>"
 
-        text = text + "Comments: " + self.image_data.commentCount.text + "<br>"
+        text = text + "Number of comments: " + self.image_data.commentCount.text + "<br>"
 
         if self.image_data.geo.Point.pos.text is not None:
-            text = text + "Location: " + self.image_data.geo.Point.pos.text + "<br>"
+            coord = self.image_data.geo.Point.pos.text.split(" ")
+            lat = float(coord[0])
+            long = float(coord[1])
+
+            text = text + "Location: %.5f, %.5f" % (lat, long) + "<br>"
 
         dim = "Dimensions: %sx%s px" % (
                 int(self.model.get_image_model().width),
@@ -756,9 +761,11 @@ class FullScreenCommentOptionsController(BasicPanel):
 
     def setup_information(self):
         model = self.model.screen_controller.model
-        self._body.part_text_set("author", "From: %s" % self.model.prop["author"])
-        #TODO: parse date from rfc3339 format
-        self._body.part_text_set("date", "Date: %s" % self.model.prop["date"])
+        self._body.part_text_set("author", "By: %s" % self.model.prop["author"])
+
+        date = parse_timestamp(self.model.prop["date"])
+        self._body.part_text_set("date", "Date: %s" % \
+                                            date.strftime("%b %d, %Y %I:%M%p"))
 
         comment_panel = self.model.prop["content"]
         comment_panel = comment_panel.replace("\n", "<br>")
