@@ -23,6 +23,8 @@ import os
 import epsilon
 import thumbnailer
 
+from manager import PicasaManager
+
 from terra.core.manager import Manager
 from terra.ui.base import PluginThemeMixin
 from terra.core.controller import Controller
@@ -59,7 +61,7 @@ EntryDialogModel = manager.get_class("Model/EntryDialog")
 CanolaError = manager.get_class("Model/Notify/Error")
 
 log = logging.getLogger("plugins.canola-picasa.controller")
-
+picasa_manager = PicasaManager()
 
 class ActionButton(PluginThemeMixin, GeneralActionButton):
     plugin = "picasa"
@@ -313,11 +315,7 @@ class AlbumGridController(Controller, OptionsControllerMixin):
         self._check_model_loaded()
         OptionsControllerMixin.__init__(self)
 
-        try:
-            self.thumbler = thumbnailer.CanolaThumbnailer()
-        except RuntimeError, e:
-            log.error(e)
-            self.thumbler = None
+        self.thumbler = picasa_manager.thumbler
 
     def do_resume(self):
         if self.model.updated:
@@ -1169,7 +1167,6 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
         self._setup_model()
         self.layout_values = None
 
-        self.thumbler = None
         self.fixed_height = self._retrieve_fixed_height()
 
         self.obj_pool = ObjectPool(20, self.view.ImageFrameThumb)
@@ -1663,8 +1660,6 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
         self.load_list_dequeue_all()
         self.obj_pool.delete()
         self.model.unload()
-        if self.thumbler:
-            self.thumbler.stop()
         self.view.delete()
 
     def back(self):

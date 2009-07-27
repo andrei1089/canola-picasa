@@ -49,10 +49,12 @@ EntryDialogModel = manager.get_class("Model/EntryDialog")
 
 log = logging.getLogger("plugins.canola-picasa.model")
 
+
 class Icon(PluginDefaultIcon):
     terra_type = "Icon/Folder/Task/Image/Picasa"
     icon = "icon/main_item/picasa"
     plugin = "picasa"
+
 
 class MainModelFolder(ModelFolder, Task):
     terra_type = "Model/Folder/Task/Image/Picasa"
@@ -64,6 +66,7 @@ class MainModelFolder(ModelFolder, Task):
         self.callback_notify = None
 
     def do_load(self):
+        picasa_manager.load_thumbler()
         self.threaded_load()
 
     def threaded_load(self, end_callback=None):
@@ -102,6 +105,11 @@ class MainModelFolder(ModelFolder, Task):
         self.is_loading = True
         ThreadedFunction(refresh_finished, refresh).start()
 
+    def do_unload(self):
+        ModelFolder.do_unload(self)
+        picasa_manager.unload_thumbler()
+
+
 class ImageModel(Model):
     terra_type = "Model/Media/Image/Picasa"
 
@@ -128,13 +136,11 @@ class ImageModel(Model):
         self.downloader = None
         self.downloader_thumb = None
 
-        #self.width = self.thumb_width
-        #self.height = self.thumb_height
-
         Model.__init__(self, name, parent)
 
     def delete_model(self):
         return picasa_manager.delete_photo(self.image)
+
 
 class AlbumServiceModelFolder(ModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album"
@@ -148,17 +154,14 @@ class AlbumServiceModelFolder(ModelFolder):
 
         ModelFolder.__init__(self, name, parent)
 
-        try:
-            self.thumbler = thumbnailer.CanolaThumbnailer()
-        except RuntimeError, e:
-            log.error(e)
-            self.thumbler = None
+        self.thumbler = picasa_manager.thumbler
 
     def request_thumbnail(self, end_callback=None):
         def request(*ignored):
             urllib.urlretrieve(url, path)
 
         def thumbler_finished_cb(path, thumb_path, w, h):
+            del picasa_manager.thumbs_in_progress[path]
             os.rename(thumb_path, path)
             if end_callback:
                 end_callback(self)
@@ -175,8 +178,15 @@ class AlbumServiceModelFolder(ModelFolder):
 
         if not url or os.path.exists(path):
             if end_callback:
-                end_callback(self)
+                try:
+                    if picasa_manager.thumbs_in_progress[path]:
+                        return
+                except KeyError:
+                    end_callback(self)
+
         else:
+            open(path, 'w').close()
+            picasa_manager.thumbs_in_progress[path] = True
             ThreadedFunction(request_finished, request).start()
 
     def do_search(self):
@@ -226,11 +236,6 @@ class AlbumServiceModelFolder(ModelFolder):
         else:
             return None
 
-    def do_unload(self):
-        if self.thumbler:
-            self.thumbler.stop()
-            self.thumbler = None
-        ModelFolder.do_unload(self)
 
 class UserAlbumModel(AlbumServiceModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album/UserAlbum"
@@ -238,12 +243,14 @@ class UserAlbumModel(AlbumServiceModelFolder):
     def do_search(self):
         return picasa_manager.get_photos_from_album(self.prop["album_id"]);
 
+
 class CommunityAlbumModel(AlbumServiceModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album/CommunityAlbum"
 
     def do_search(self):
         return picasa_manager.get_photos_from_album(self.prop["album_id"], \
                                                        self.prop["album_user"]);
+
 
 class CommunitySearchTag(AlbumServiceModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album/SearchTag"
@@ -269,6 +276,7 @@ class GPSSearch(ModelFolder):
         UpdateGPS("Update GPS location", self)
         CommunityGPS("Current GPS location", self, None, True)
 
+
 class UpdateGPS(Model):
     terra_type = "Model/Folder/Image/Picasa/GPSSearch/Update"
 
@@ -277,6 +285,7 @@ class UpdateGPS(Model):
 
     def load(self):
         print "updating gps location"
+
 
 class CommunityGPSManual(AlbumServiceModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album/GPSManual"
@@ -326,6 +335,7 @@ class CommunityGPSManual(AlbumServiceModelFolder):
         dialog = EntryDialogModel(self.dialog_title, self.dialog1_msg, answer_callback=self.show_dialog2)
         self.parent.show_notify(dialog)
 
+
 class CommunityGPS(AlbumServiceModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album/GPS"
 
@@ -340,11 +350,13 @@ class CommunityGPS(AlbumServiceModelFolder):
         else:
             self.next_screen = True
 
+
 class CommunityFeatured(AlbumServiceModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album/Featured"
 
     def do_search(self):
         return picasa_manager.gd_client.GetFeed("/data/feed/api/featured?max-results=50")
+
 
 class CommunityLocationName(AlbumServiceModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album/LocationName"
@@ -432,6 +444,7 @@ class ServiceModelFolder(ModelFolder):
         else:
             UserAlbumModel(album.title.text, self, prop)
 
+
 class UserAlbumModelFolder(ServiceModelFolder):
     terra_type = "Model/Folder/Task/Image/Picasa/Service/UserAlbumModel"
 
@@ -455,6 +468,7 @@ class UserAlbumModelFolder(ServiceModelFolder):
             self._create_model_from_entry(album)
             return True
         return False
+
 
 class CommunityAlbumModelFolder(ServiceModelFolder):
     terra_type = "Model/Folder/Task/Image/Picasa/Service/CommunityAlbumModel"
@@ -489,6 +503,7 @@ class OptionsModel(ModelFolder):
         UserPassOptionsModel(self)
         ClearCacheModel(self)
 
+
 MixedListItemDual = \
                 manager.get_class("Model/Settings/Folder/MixedList/Item/Dual")
 class UserPassOptionsModel(MixedListItemDual):
@@ -515,6 +530,7 @@ class UserPassOptionsModel(MixedListItemDual):
 
     def on_right_button_clicked(self):
         self.callback_use(self)
+
 
 ItemRenderer = manager.get_class("Renderer/EtkList/Item")
 class MixedListItem(ModelFolder):
@@ -548,6 +564,7 @@ class MixedListItem(ModelFolder):
 
     def do_load(self):
         pass
+
 
 class ClearCacheModel(MixedListItem):
     terra_type = "Model/Settings/Folder/InternetMedia/Picasa/ClearCache"
@@ -628,6 +645,7 @@ class PicasaAddAlbumOptionModel(MixedListItemDual):
     def on_right_button_clicked(self):
         self.callback_use(self)
 
+
 MixedListItemOnOff = \
                 manager.get_class("Model/Settings/Folder/MixedList/Item/OnOff")
 class PhotocastOnOffModel(MixedListItemOnOff):
@@ -650,6 +668,7 @@ class PhotocastOnOffModel(MixedListItemOnOff):
             self.parent._remove_albums()
 
         self.callback_update(self)
+
 
 class PhotocastRefreshModel(MixedListItem):
     terra_type = "Model/Options/Folder/Image/Picasa/Album/Photocast/Refresh"
@@ -771,6 +790,7 @@ class PicasaAlbumModelFolderOption(OptionsModelFolder):
         PicasaAddAlbumOptionModel(self)
         PhotocastSyncModel(self)
 
+
 class ChangeAlbumNameOptionModel(Model):
     terra_type = "Model/Options/Folder/Image/Picasa/Album/Properties/ChangeName"
     title = "Change name"
@@ -790,6 +810,7 @@ class ChangeAlbumNameOptionModel(Model):
             return True
         else:
             return False
+
 
 class ChangeAlbumDescriptionOptionModel(Model):
     terra_type =\
@@ -811,6 +832,7 @@ class ChangeAlbumDescriptionOptionModel(Model):
         else:
             return False
 
+
 class PicasaAlbumModelOption(OptionsModelFolder):
     terra_type = "Model/Options/Folder/Image/Picasa/Album"
     title = "Album Options"
@@ -826,6 +848,7 @@ class PicasaAlbumModelOption(OptionsModelFolder):
         ChangeAlbumNameOptionModel(self)
         ChangeAlbumDescriptionOptionModel(self)
         AlbumAccessModelFolder(self)
+
 
 class FullScreenUploadAlbumModel(OptionsActionModel):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload/Submenu"
@@ -863,11 +886,13 @@ class FullScreenUploadAlbumModel(OptionsActionModel):
         self.callback_locked()
         ThreadedFunction(upload_finished, self.upload).start()
 
+
 class UploadLoginFailedOptionModel(OptionsActionModel):
     name = "Failed to login"
 
     def execute(self):
         return
+
 
 class FullScreenUploadOptions(OptionsModelFolder):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload"
@@ -894,6 +919,7 @@ class FullScreenUploadOptions(OptionsModelFolder):
                 FullScreenUploadAlbumModel(i.title.text, self, i.gphoto_id.text)
         else:
             UploadLoginFailedOptionModel(self)
+
 
 class FullScreenUploadAllOptions(OptionsActionModel):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaUploadAll"
@@ -948,6 +974,7 @@ class FullScreenUploadAllOptions(OptionsActionModel):
         self.callback_locked()
         ThreadedFunction(upload_finished, self.upload).start()
 
+
 class FullScreenAddCommentOptions(Model):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaAddComment"
     title = "Add comment"
@@ -964,10 +991,12 @@ class FullScreenAddCommentOptions(Model):
         image_model = album_model.children[album_model.current]
         return picasa_manager.add_comment(image_model.image, comment)
 
+
 class FullScreenOptions(OptionsModelFolder):
     def get_image_model(self):
         model = self.screen_controller.model
         return model.children[model.current]
+
 
 class FullScreenImageInfoOptions(FullScreenOptions):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaImageInfo"
@@ -979,6 +1008,7 @@ class FullScreenImageInfoOptions(FullScreenOptions):
             return
         FullScreenOptions.__init__(self, parent, screen_controller)
 
+
 class FullScreenCommentOptions(FullScreenOptions):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaCommentList/Item"
 
@@ -988,6 +1018,7 @@ class FullScreenCommentOptions(FullScreenOptions):
             self.name = prop["title"]
             self.title = prop["title"]
         FullScreenOptions.__init__(self, parent, screen_controller)
+
 
 class FullScreenCommentListOptions(FullScreenOptions):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaCommentList"
@@ -1016,6 +1047,7 @@ class FullScreenCommentListOptions(FullScreenOptions):
         for l in list:
             FullScreenCommentOptions(self, self.screen_controller, l)
 
+
 class FullScreenDeletePicOptions(OptionsActionModel):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaDelete"
     name = "Delete picture"
@@ -1032,6 +1064,7 @@ class FullScreenDeletePicOptions(OptionsActionModel):
     def execute(self):
         self.callback_delete_pic()
 
+
 class AlbumAccessModel(Model):
     def __init__(self, name, parent=None):
         Model.__init__(self, name, parent)
@@ -1040,6 +1073,7 @@ class AlbumAccessModel(Model):
 
     def execute(self):
         print str(self.name) + " clicked"
+
 
 class AlbumAccessModelFolder(ModelFolder):
     terra_type = "Model/Options/Folder/Image/Picasa/Album/Properties/Access"

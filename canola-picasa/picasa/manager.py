@@ -21,6 +21,7 @@ import gdata.media
 import gdata.geo
 import gdata.service
 import os
+import thumbnailer
 
 from gdata.photos.service import GooglePhotosException
 from terra.core.singleton import Singleton
@@ -42,12 +43,27 @@ class PicasaManager(Singleton):
         self.albums =''
         self.thumbs_path = ''
         self.outside_terra = False;
+
+        #used to save the list of current downloading thumbs to avoid multiple
+        #downloads for the same file
+        self.thumbs_in_progress = {};
+
         try:
             self.prefs = PluginPrefs("picasa")
         except:
             print "running outside canola"
             self.outside_terra = True;
 
+    def load_thumbler(self):
+        try:
+            self.thumbler = thumbnailer.CanolaThumbnailer()
+        except RuntimeError, e:
+            log.error(e)
+            self.thumbler = None
+
+    def unload_thumbler(self):
+        self.thumbler.stop()
+        self.thumbler = None
 
     def reload_prefs(self):
         self.user = self.get_preference("username", "")
