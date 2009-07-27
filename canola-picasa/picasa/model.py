@@ -650,7 +650,7 @@ MixedListItemOnOff = \
                 manager.get_class("Model/Settings/Folder/MixedList/Item/OnOff")
 class PhotocastOnOffModel(MixedListItemOnOff):
     terra_type = "Model/Options/Folder/Image/Picasa/Album/PhotocastOnOff"
-    title = "Photocast sync"
+    title = "Photocasts sync"
 
     def __init__(self, parent=None):
         MixedListItemOnOff.__init__(self, parent)
@@ -706,7 +706,7 @@ class PhotocastRefreshModel(MixedListItem):
 
 class PhotocastSyncModel(ModelFolder):
     terra_type = "Model/Options/Folder/Image/Picasa/Album/Photocast"
-    title = "Photocast"
+    title = "Photocasts"
     table = "photocast_feeds"
 
     stmt_select = "SELECT id, uri, title, desc, author FROM %s" % table
