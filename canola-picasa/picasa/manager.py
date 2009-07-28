@@ -121,7 +121,7 @@ class PicasaManager(Singleton):
             self.gd_client.ProgrammaticLogin()
             self.logged = True
             self.albums = None
-        except gdata.service.Error as error:
+        except gdata.service.Error, error:
             log.error("Could not login to Picasa, exception: %s" % error)
             self.login_error = error
             self.logged = False
@@ -234,7 +234,7 @@ class PicasaManager(Singleton):
         try:
             self.gd_client.InsertPhotoSimple(album_url, summary, \
                 summary, path, content_type='image/jpeg')
-        except GooglePhotosException as error:
+        except GooglePhotosException, error:
             log.error("upload error %s" % error)
             return (False, error)
         return (True, None)
