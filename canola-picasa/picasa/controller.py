@@ -273,11 +273,8 @@ class GPSSearchController(BaseListController):
 
         model = self.model.children[index]
         model.callback_finished = click_callback
-        try:
-            if model.show_dialog:
-                model.show_dialog()
-        except:
-            self._show_notify(CanolaError("ERROR!"))
+
+        model.show_dialog()
 
 class AlbumController(Controller):
     terra_type = "Controller/Folder/Image/Picasa/Service/Album"

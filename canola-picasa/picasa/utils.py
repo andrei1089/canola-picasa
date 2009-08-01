@@ -56,7 +56,7 @@ def download_file(model, path, url, callback_exists=None, \
 def gps_valid_coord(value, type=None):
     try:
         value = float(value)
-    except ValueError:
+    except (ValueError, TypeError):
         return False
 
     if type == "lat":

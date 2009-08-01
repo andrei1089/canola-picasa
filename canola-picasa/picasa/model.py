@@ -27,7 +27,7 @@ from time import time
 
 from utils import *
 
-from manager import PicasaManager
+from manager import PicasaManager, GpsManager
 
 from terra.core.task import Task
 from terra.core.manager import Manager
@@ -39,6 +39,7 @@ from terra.core.plugin_prefs import PluginPrefs
 manager = Manager()
 db = manager.canola_db
 picasa_manager = PicasaManager()
+gps_manager = GpsManager()
 
 PluginDefaultIcon = manager.get_class("Icon/Plugin")
 OptionsActionModel = manager.get_class("Model/Options/Action")
@@ -279,13 +280,41 @@ class GPSSearch(ModelFolder):
 
 class UpdateGPS(Model):
     terra_type = "Model/Folder/Image/Picasa/GPSSearch/Update"
+    show_dialog = False
 
     def __init__(self, name, parent):
         Model.__init__(self, name, parent)
+        self.dialog_queue = None
+        self.locked = False
 
-    def load(self):
-        print "updating gps location"
+    def update_finished(self):
+        print gps_manager.lat
+        print gps_manager.long
+        self.parent.gps_coord = (gps_manager.lat, gps_manager.long)
+        dialog = CanolaError("Location available. Lat: %s Long: %s" % self.parent.gps_coord )
+        if not self.locked:
+            self.parent.show_notify(dialog)
+        else:
+            self.dialog_queue = dialog
 
+    def show_dialog(self):
+        def unlock(ignored, text):
+            self.locked = False
+            if self.dialog_queue:
+                self.parent.show_notify(self.dialog_queue)
+                dialog = self.dialog_queue
+                self.dialog_queue = None
+
+        """
+        used this lock to avoid the case when the location becomes available
+        before the user clicks the ok button of the notify. Trying to show 2
+        notifications at the same time generates an error.
+        """
+        self.locked = True
+        self.parent.show_notify(CanolaError("You will be notified when the location is available!",\
+                                                        answer_callback=unlock))
+        gps_manager.callback_location_updated = self.update_finished
+        gps_manager.start()
 
 class CommunityGPSManual(AlbumServiceModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album/GPSManual"
@@ -302,7 +331,6 @@ class CommunityGPSManual(AlbumServiceModelFolder):
     def do_search(self):
         bbox =  "%f,%f,%f,%f" % self.rectangle
         return picasa_manager.gd_client.GetFeed("/data/feed/api/all?max-results=50&bbox=%s" % bbox, limit='30')
-
 
     def show_dialog2(self, parent, text):
         self.lat = text
@@ -346,10 +374,8 @@ class CommunityGPS(AlbumServiceModelFolder):
     def show_dialog(self):
         if self.parent.gps_coord is None:
             self.parent.show_notify(CanolaError("No GPS location. Click Update GPS location first"))
-            self.next_screen = False
         else:
-            self.next_screen = True
-
+            self.callback_finished()
 
 class CommunityFeatured(AlbumServiceModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album/Featured"
