@@ -912,12 +912,6 @@ class FullScreenUploadAlbumModel(OptionsActionModel):
         self.callback_locked()
         ThreadedFunction(upload_finished, self.upload).start()
 
-class UploadLoginFailedOptionModel(OptionsActionModel):
-    name = "Failed to login"
-
-    def execute(self):
-        return
-
 
 class FullScreenUploadOptions(OptionsModelFolder):
     terra_type = "Model/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload"
@@ -934,16 +928,10 @@ class FullScreenUploadOptions(OptionsModelFolder):
         ImageModel = ImageModelFolder.children[ImageModelFolder.current]
         self.image_path = ImageModel.path
 
-        if not picasa_manager.is_logged():
-            picasa_manager.login()
-
-        if picasa_manager.is_logged():
-            albums = picasa_manager.get_user_albums()
-            FullScreenUploadAlbumModel("New album" , self)
-            for i in albums.entry:
-                FullScreenUploadAlbumModel(i.title.text, self, i.gphoto_id.text)
-        else:
-            UploadLoginFailedOptionModel(self)
+        albums = picasa_manager.get_user_albums()
+        FullScreenUploadAlbumModel("New album" , self)
+        for i in albums.entry:
+            FullScreenUploadAlbumModel(i.title.text, self, i.gphoto_id.text)
 
 
 class FullScreenUploadAllOptions(OptionsActionModel):
@@ -966,7 +954,7 @@ class FullScreenUploadAllOptions(OptionsActionModel):
             picasa_manager.login()
 
         if not picasa_manager.is_logged():
-            return (False, "Failed to login")
+            return (False, "User not logged in to Picasa")
 
         res = picasa_manager.create_album(album_model.name)
         if not res:

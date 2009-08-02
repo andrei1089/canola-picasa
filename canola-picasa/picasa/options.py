@@ -20,6 +20,7 @@ import logging
 
 from time import gmtime, strftime
 
+from terra.core.controller import Controller
 from terra.core.manager import Manager
 from terra.core.terra_object import TerraObject
 from terra.core.threaded_func import ThreadedFunction
@@ -503,6 +504,40 @@ class AlbumAccessFolderController(CheckListPanelController):
         self.view_wait = MessageView(self.parent.last_panel, "please wait")
         self.view_wait.message()
         ThreadedFunction(th_finished, th_function).start()
+
+
+class FullScreenUploadController(Controller):
+    terra_type = "Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload"
+
+    def __new__(cls, *args, **kargs):
+        if not picasa_manager.is_logged():
+            picasa_manager.login()
+
+        if picasa_manager.is_logged():
+            obj = Controller.__new__(ControllerOptionsFolder, *args, **kargs)
+            obj.__init__(*args, **kargs)
+
+        else:
+            obj = Controller.__new__(FullScreenMessageController, *args, **kargs)
+            obj.__init__(*args, message="User not logged in to Picasa", **kargs)
+
+        return obj
+
+
+class FullScreenMessageController(ModalController):
+    def __init__(self, model, canvas, parent, message):
+        ModalController.__init__(self, model, canvas, parent)
+        self.view = ModalMessage(parent.last_panel, message)
+        self.view.show()
+        self.view.callback_clicked = self.stop
+
+    def stop(self):
+        self.view.hide()
+
+    def delete(self):
+        self.view.delete()
+        self.view = None
+
 
 class FullScreenUploadAlbumController(ModalController):
     terra_type = "Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload/Submenu"

@@ -36,6 +36,7 @@ filter_map = Controller/Settings/Folder/InternetMedia/Picasa - OptionsController
              Controller/Settings/Folder/InternetMedia/Picasa/ClearCache - ClearCacheController
              Controller/Options/Folder/Image/Picasa/Album/Photocast - PhotocastSyncController
              Controller/Options/Folder/Image/Picasa/Album/Photocast/Refresh - PhotocastRefreshController
+             Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload - FullScreenUploadController
              Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaUpload/Submenu - FullScreenUploadAlbumController
              Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaUploadAll - FullScreenUploadAllController
              Controller/Options/Folder/Image/Fullscreen/Submenu/PicasaImageInfo - FullScreenImageInfoOptionsController
