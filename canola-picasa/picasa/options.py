@@ -519,7 +519,8 @@ class FullScreenUploadController(Controller):
 
         else:
             obj = Controller.__new__(FullScreenMessageController, *args, **kargs)
-            obj.__init__(*args, message="User not logged in to Picasa", **kargs)
+            kargs[message] = "User not logged in to Picasa"
+            obj.__init__(*args, **kargs)
 
         return obj
 
