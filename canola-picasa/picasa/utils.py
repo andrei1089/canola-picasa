@@ -46,7 +46,6 @@ def download_file(model, path, url, callback_exists=None, \
             downloader = download_mger.add(url, path)
             downloader.on_finished_add(download_finished)
             downloader.start(True)
-            #model.downloader = downloader
     else:
         log.debug("file %s was already downloaded" % path)
         if callback_exists:

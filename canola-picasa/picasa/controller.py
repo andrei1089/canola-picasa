@@ -406,13 +406,14 @@ class AlbumGridController(Controller, OptionsControllerMixin):
         self.view.thaw()
 
     def do_suspend(self):
-        #TODO:
-        print "!do_suspend"
+        return
 
     def delete(self):
-        #TODO:
-        print "!delete"
-        #self.thumbler.stop()
+        for c in self.model.children:
+            if c.downloader_thumb is not None:
+                download_mger.set_inactive(c.downloader_thumb)
+                download_mger._remove_from_manager(c.downloader_thumb)
+        self.thumbler.request_cancel_all()
         self.model.changed_callback_del(self._update_ui)
         self.view.delete()
         self.model.unload()
@@ -681,7 +682,6 @@ class ImageInternalController(Controller):
         self.parent.back()
 
 
-##TODO: make this class public in canola-core
 class ImageFullscreenController(Controller, OptionsControllerMixin):
     terra_type = "Controller/Media/Image"
     click_constant = 20
@@ -1141,6 +1141,7 @@ class ImageFullscreenController(Controller, OptionsControllerMixin):
 
     def options_model_get(self):
         return ImagesOptionsModelFolder(None, self)
+
 
 class AlbumThumbController(Controller, OptionsControllerMixin):
     terra_type = "Controller/Folder/Image/Picasa/Service/Album"
@@ -1671,6 +1672,7 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
 
     def options_model_get(self):
         return self.model.options_model_get(self)
+
 
 class ObjectPool(object):
     def __init__(self, num_pre_allocate, generator, *args, **kargs):
