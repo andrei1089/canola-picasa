@@ -23,6 +23,7 @@ import gdata.service
 import os
 import thumbnailer
 import liblocation
+import gobject
 
 from gdata.photos.service import GooglePhotosException
 from terra.core.singleton import Singleton
@@ -90,6 +91,7 @@ class GpsManager(Singleton):
         # control it.
         if gpsd_control.struct().can_control:
             liblocation.gpsd_control_start(gpsd_control)
+        print "gps started"
 
 class PicasaManager(Singleton):
     def __init__(self):
