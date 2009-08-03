@@ -171,7 +171,6 @@ class GeneralRowRenderer(PluginThemeMixin, BaseRowRenderer):
         self.part_text_set("album_cnt_photos", "Photos: " + \
                                                     model.prop["cntPhotos"])
         self.part_text_set("album_access", model.prop["access"].capitalize())
-        #TODO: do not modify thumb's l/h ratio
         model.request_thumbnail(self.cb_load_thumbnail)
 
     @evas.decorators.del_callback
@@ -280,15 +279,20 @@ class AlbumController(Controller):
     terra_type = "Controller/Folder/Image/Picasa/Service/Album"
 
     def __new__(cls, *args, **kargs):
-        s = PluginPrefs("settings")
-        try:
-            value = s["alternative_thumb_screen"]
-        except:
-            value = False
-        if value:
-            obj = Controller.__new__(AlbumGridController, *args, **kargs)
-        else:
-            obj = Controller.__new__(AlbumThumbController, *args, **kargs)
+        """
+        use only GridController until the problem with ThumbController is solved
+        """
+        #s = PluginPrefs("settings")
+        #try:
+        #    value = s["alternative_thumb_screen"]
+        #except:
+        #    value = False
+        #if value:
+        #    obj = Controller.__new__(AlbumGridController, *args, **kargs)
+        #else:
+        #    obj = Controller.__new__(AlbumThumbController, *args, **kargs)
+        obj = Controller.__new__(AlbumGridController, *args, **kargs)
+
         obj.__init__(*args, **kargs)
         return obj
 

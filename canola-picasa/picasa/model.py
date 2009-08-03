@@ -90,7 +90,7 @@ class MainModelFolder(ModelFolder, Task):
             self.login_error = picasa_manager.get_login_error()
 
             if self.login_successful:
-                UserAlbumModelFolder("My albums", self)
+                UserPicturesModelFolder("My pictures", self)
 
             CommunityAlbumModelFolder("Search albums by user", self)
             CommunitySearchTag("Search by tag", self, None, True)
@@ -110,6 +110,13 @@ class MainModelFolder(ModelFolder, Task):
         ModelFolder.do_unload(self)
         picasa_manager.unload_thumbler()
 
+class UserPicturesModelFolder(ModelFolder, Task):
+    terra_type = "Model/Folder/Task/Image/Picasa"
+    terra_task_type = "Task/Folder/Task/Image/Picasa"
+
+    def do_load(self):
+        UserAlbumModelFolder("My albums", self)
+        UserAllPicturesModel("All pictures", self, None, True)
 
 class ImageModel(Model):
     terra_type = "Model/Media/Image/Picasa"
@@ -243,6 +250,12 @@ class UserAlbumModel(AlbumServiceModelFolder):
 
     def do_search(self):
         return picasa_manager.get_photos_from_album(self.prop["album_id"]);
+
+class UserAllPicturesModel(AlbumServiceModelFolder):
+    terra_type = "Model/Folder/Image/Picasa/Service/Album/Featured"
+
+    def do_search(self):
+        return picasa_manager.gd_client.GetUserFeed(kind='photo', limit=1000)
 
 
 class CommunityAlbumModel(AlbumServiceModelFolder):
