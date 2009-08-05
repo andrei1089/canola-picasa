@@ -23,6 +23,7 @@ filter_map = Controller/Folder/Task/Image/Picasa/Service - ServiceController
              Controller/Folder/Image/Picasa/Service/Album - AlbumController
              Controller/Folder/Task/Image/Picasa - MainController
              Controller/Folder/Image/Picasa/GPSSearch - GPSSearchController
+             Controller/Folder/Image/Picasa/Service/Album/UserAllPictures - UserAllPicturesController
 
 [Picasa Options]
 modname = picasa.options

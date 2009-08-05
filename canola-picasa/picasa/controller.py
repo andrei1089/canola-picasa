@@ -780,19 +780,26 @@ class ImageFullscreenController(Controller, OptionsControllerMixin):
     def _model_loaded(self, model):
         self.view.loaded()
         model.callback_loaded = None
+        model.current = 0
+        self.cb_on_model_load_finished()
 
     def cb_on_transition_from(self):
         self._setup_view()
+
+    def cb_on_model_load_finished(self):
+        self._cmd_emitted()
+        model_item = self.model.children[self.model.current]
+        self.start_full_throbber(self.view.image_new_set, self.image_preloaded,
+                                 model_item)
 
     def cb_on_transition_in_finished(self, *ignored):
         if not self.first_transition:
             return
 
         self.first_transition = False
-        self._cmd_emitted()
-        model_item = self.model.children[self.model.current]
-        self.start_full_throbber(self.view.image_new_set, self.image_preloaded,
-                                 model_item)
+        self.view.throbber_start()
+        if not self.model.is_loading:
+            self.cb_on_model_load_finished()
 
     def cb_clicked(self):
         self.stop_slideshow()
@@ -1707,3 +1714,7 @@ class ObjectPool(object):
 
     def free_objs_iter(self):
         return self.free_objs.__iter__()
+
+class UserAllPicturesController(ImageFullscreenController):
+    terra_type = "Controller/Folder/Image/Picasa/Service/Album/UserAllPictures"
+

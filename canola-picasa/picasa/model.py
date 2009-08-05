@@ -116,7 +116,7 @@ class UserPicturesModelFolder(ModelFolder, Task):
 
     def do_load(self):
         UserAlbumModelFolder("My albums", self)
-        UserAllPicturesModel("All pictures", self, None, True)
+        UserAllPicturesModel("All pictures slideshow", self, None, True)
 
 class ImageModel(Model):
     terra_type = "Model/Media/Image/Picasa"
@@ -252,7 +252,7 @@ class UserAlbumModel(AlbumServiceModelFolder):
         return picasa_manager.get_photos_from_album(self.prop["album_id"]);
 
 class UserAllPicturesModel(AlbumServiceModelFolder):
-    terra_type = "Model/Folder/Image/Picasa/Service/Album/Featured"
+    terra_type = "Model/Folder/Image/Picasa/Service/Album/UserAllPictures"
 
     def do_search(self):
         return picasa_manager.gd_client.GetUserFeed(kind='photo', limit=1000)
