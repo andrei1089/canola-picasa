@@ -279,19 +279,15 @@ class AlbumController(Controller):
     terra_type = "Controller/Folder/Image/Picasa/Service/Album"
 
     def __new__(cls, *args, **kargs):
-        """
-        use only GridController until the problem with ThumbController is solved
-        """
-        #s = PluginPrefs("settings")
-        #try:
-        #    value = s["alternative_thumb_screen"]
-        #except:
-        #    value = False
-        #if value:
-        #    obj = Controller.__new__(AlbumGridController, *args, **kargs)
-        #else:
-        #    obj = Controller.__new__(AlbumThumbController, *args, **kargs)
-        obj = Controller.__new__(AlbumGridController, *args, **kargs)
+        s = PluginPrefs("settings")
+        try:
+            value = s["alternative_thumb_screen"]
+        except:
+            value = False
+        if value:
+            obj = Controller.__new__(AlbumGridController, *args, **kargs)
+        else:
+            obj = Controller.__new__(AlbumThumbController, *args, **kargs)
 
         obj.__init__(*args, **kargs)
         return obj
@@ -1204,8 +1200,9 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
     def _model_loaded(self, model):
        #TODO: fix this
         x, y, w, h = self.layout_values
-        self._layout_view(x, y, w, h)
-
+        self.view.image_grid._setup_gui(x, y, w, h)
+        self._cb_move_offset(20)
+        self.load_list_enqueue_all()
         self.view.loaded()
         model.callback_loaded = None
 
