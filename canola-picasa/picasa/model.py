@@ -302,8 +302,8 @@ class UpdateGPS(Model):
     def update_finished(self):
         print gps_manager.lat
         print gps_manager.long
-        dialog = CanolaError("Location available. Lat: %s Long: %s" %\
-                                 (str(gps_manager.lat), str(gps_manager.long))
+        dialog = CanolaError("Location available. Lat: %s Long: %s" % \
+                                 (str(gps_manager.lat), str(gps_manager.long)))
         if not self.locked:
             self.parent.show_notify(dialog)
         else:
