@@ -25,6 +25,9 @@ import thumbnailer
 import liblocation
 import gobject
 
+import ctypes as C
+from types import MethodType
+
 from gdata.photos.service import GooglePhotosException
 from terra.core.singleton import Singleton
 from terra.core.plugin_prefs import PluginPrefs
@@ -59,7 +62,8 @@ class GpsManager(Singleton):
 
             self.lat = fix.latitude
             self.long = fix.longitude
-            self.callback_location_updated()
+            if self.callback_location_updated:
+                self.callback_location_updated()
 
         print 'satellites_in_view', gps_struct.satellites_in_view
         print 'satellites_in_use', gps_struct.satellites_in_use
@@ -81,7 +85,7 @@ class GpsManager(Singleton):
         gps = liblocation.gps_device_get_new()
 
         # connect its gobject 'changed' signal to our callback function
-        gps.connect('changed', notify_gps_update)
+        gps.connect('changed', self.notify_gps_update)
 
         # create a gpsd_control object (which is a full pythonic gobject)
         gpsd_control = liblocation.gpsd_control_get_default()
@@ -126,7 +130,8 @@ class PicasaManager(Singleton):
             self.thumbler = None
 
     def unload_thumbler(self):
-        self.thumbler.stop()
+        if self.thumbler:
+            self.thumbler.stop()
         self.thumbler = None
 
     def reload_prefs(self):
