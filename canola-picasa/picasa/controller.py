@@ -19,6 +19,7 @@ import ecore
 import locale
 import logging
 import os
+import random
 
 import epsilon
 import thumbnailer
@@ -777,6 +778,16 @@ class ImageFullscreenController(Controller, OptionsControllerMixin):
         self.view.loaded()
         model.callback_loaded = None
         model.current = 0
+
+        """
+        used to prevent an excepton if the user activates random mode
+        before the load of the model is finished
+        """
+        if self.slideshow_random:
+            self.slideshow_random_idx = 0
+            self.slideshow_random_list = list(enumerate(self.model.children))
+            random.shuffle(self.slideshow_random_list)
+
         self.cb_on_model_load_finished()
 
     def cb_on_transition_from(self):
@@ -1023,6 +1034,8 @@ class ImageFullscreenController(Controller, OptionsControllerMixin):
             log.debug("When clicking next: %s" % ie)
             self._end_reached()
             return False
+        except ZeroDivisionError:
+            log.debug("Images list not yet loaded")
 
         self.view.image_prev_preload_cancel()
         self.view.image_new_set(next_model, end_callback)
