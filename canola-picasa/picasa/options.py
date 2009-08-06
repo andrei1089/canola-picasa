@@ -144,6 +144,14 @@ class UserPassController(ModalController):
         self.view.hide(end_callback=cb)
 
     def _on_ok_clicked(self):
+        if not self.view.username and not self.view.password:
+            picasa_manager.user = self.view.username
+            picasa_manager.password = self.view.password
+
+            self.close()
+            self.parent.killall()
+            return
+
         if not self.view.username or not self.view.password:
             return
 
