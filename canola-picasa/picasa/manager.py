@@ -40,6 +40,7 @@ class GpsManager(Singleton):
         self.lat = None
         self.long = None
         self.callback_location_updated = None
+        self.stop_on_exit = False
 
     def notify_gps_update(gps_dev):
         # Note: not all structure elements are used here,
@@ -88,14 +89,19 @@ class GpsManager(Singleton):
         gps.connect('changed', self.notify_gps_update)
 
         # create a gpsd_control object (which is a full pythonic gobject)
-        gpsd_control = liblocation.gpsd_control_get_default()
+        self.gpsd_control = liblocation.gpsd_control_get_default()
 
         # are we the first one to grab gpsd?  If so, we can and must
         # start it running.  If we didn't grab it first, then we cannot
         # control it.
-        if gpsd_control.struct().can_control:
-            liblocation.gpsd_control_start(gpsd_control)
+        if self.gpsd_control.struct().can_control:
+            liblocation.gpsd_control_start(self.gpsd_control)
+            self.stop_on_exit = True
         print "gps started"
+
+    def stop(self):
+        if self.stop_on_exit and self.gpsd_control.struct().can_control:
+            liblocation.gpsd_control_stop(self.gpsd_control)
 
 class PicasaManager(Singleton):
     def __init__(self):
