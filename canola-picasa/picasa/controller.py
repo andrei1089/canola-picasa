@@ -659,6 +659,7 @@ class ImageInternalController(Controller):
             return
         log.debug("setting child")
         child = self.load_list.pop()
+        child.throbber_start()
         child.file_set_cb()
 
     def hold(self):
