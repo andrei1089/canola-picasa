@@ -268,7 +268,6 @@ class GPSSearchController(BaseListController):
 
     def cb_on_clicked(self, view, index):
         def click_callback():
-            print "callback finished"
             BaseListController.cb_on_clicked(self, view, index)
 
         model = self.model.children[index]
@@ -693,8 +692,7 @@ class ImageFullscreenController(Controller, OptionsControllerMixin):
 
         Controller.__init__(self, model, canvas, parent)
 
-        self.model.changed_callback_add(self._model_loaded)
-
+        self.model.changed_callback_add(self._update_ui)
         # mger to disable screen power save during slideshow
         self._mger = Manager()
 
@@ -774,10 +772,14 @@ class ImageFullscreenController(Controller, OptionsControllerMixin):
         else:
             self.view.hide_next_control()
 
-    def _model_loaded(self, model):
+    def _update_ui(self, model):
         self.view.loaded()
+
+    def _model_loaded(self, model):
+        self._update_ui(model)
         model.callback_loaded = None
-        model.current = 0
+        if model.current is None:
+            model.current = 0
 
         """
         used to prevent an excepton if the user activates random mode
@@ -1166,6 +1168,21 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
     def __init__(self, model, canvas, parent):
         Controller.__init__(self, model, canvas, parent)
 
+        self.reinit()
+
+        self._setup_view()
+        self._setup_model()
+        self.layout_values = None
+
+        self.fixed_height = self._retrieve_fixed_height()
+
+        self.obj_pool = ObjectPool(20, self.view.ImageFrameThumb)
+        self.deleting = False
+
+        OptionsControllerMixin.__init__(self)
+
+
+    def reinit(self):
         self.threshold_w = 0
         self.row_limit_intervals = []
         self.row_intervals = []
@@ -1181,17 +1198,6 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
         self.min_right_row = 0
 
 
-        self._setup_view()
-        self._setup_model()
-        self.layout_values = None
-
-        self.fixed_height = self._retrieve_fixed_height()
-
-        self.obj_pool = ObjectPool(20, self.view.ImageFrameThumb)
-        self.deleting = False
-
-        OptionsControllerMixin.__init__(self)
-
     def _setup_view(self):
         self.view = ImageThumbScreen(self.evas, self.parent.view,
                                      title=self.model.name,
@@ -1205,19 +1211,34 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
         self.view.callback_on_theme_changed = self.cb_on_theme_changed
         self.view.callback_transition_in_finished = \
                                         self.cb_on_transition_in_finished
+        self.view.throbber_start()
 
     def _setup_model(self):
         self.model.callback_loaded = self._model_loaded
         self.model.load()
 
+    def _update_ui(self, model):
+        x, y, w, h = self.layout_values
+        self.reinit()
+
+        self._setup_view()
+
+        self._layout_view(x, y, w, h)
+        self.obj_pool = ObjectPool(20, self.view.ImageFrameThumb)
+
+        self.view.image_grid._setup_gui(x, y, w, h)
+        self.view.loaded()
+
+
     def _model_loaded(self, model):
-       #TODO: fix this
         x, y, w, h = self.layout_values
         self.view.image_grid._setup_gui(x, y, w, h)
         self._cb_move_offset(20)
         self.load_list_enqueue_all()
         self.view.loaded()
+
         model.callback_loaded = None
+        self.model.changed_callback_add(self._update_ui)
 
     def _layout_view(self, x, y, w, h):
         self.layout_values = (x, y, w, h)
@@ -1324,7 +1345,6 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
             model_item.thumb_height = model_item.height
             model_item.thumb_path = model_item.path
         else:
-            print model_item
             model_item.thumb_width = \
                 int(self.fixed_height * (model_item.width / float(model_item.height)))
             model_item.thumb_height = self.fixed_height
@@ -1409,7 +1429,6 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
             self.thumb_request_idler = None
             return False
         model = self.thumb_request_list.pop(0)
-        print model
         if not model:
             return True
 
@@ -1678,6 +1697,7 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
         self.deleting = True
         self.load_list_dequeue_all()
         self.obj_pool.delete()
+        self.model.changed_callback_del(self._update_ui)
         self.model.unload()
         self.view.delete()
 

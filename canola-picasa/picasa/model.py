@@ -148,7 +148,9 @@ class ImageModel(Model):
         Model.__init__(self, name, parent)
 
     def delete_model(self):
-        return picasa_manager.delete_photo(self.image)
+        ret = picasa_manager.delete_photo(self.image)
+        picasa_manager.refresh_user_albums(picasa_manager.user)
+        return ret
 
 
 class AlbumServiceModelFolder(ModelFolder):
