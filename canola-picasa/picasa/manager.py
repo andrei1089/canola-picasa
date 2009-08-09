@@ -15,6 +15,7 @@
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import ecore
 
 import gdata.photos.service
 import gdata.media
@@ -42,7 +43,7 @@ class GpsManager(Singleton):
         self.callback_location_updated = None
         self.stop_on_exit = False
 
-    def notify_gps_update(gps_dev):
+    def notify_gps_update(self, gps_dev):
         # Note: not all structure elements are used here,
         # but they are all made available to python.
         # Accessing the rest is left as an exercise.
@@ -78,6 +79,24 @@ class GpsManager(Singleton):
             print 'in_use', sv.in_use
         print
 
+    def check_gps(self):
+        print "check gps coords"
+        gps_struct = self.gps.struct()
+        fix = gps_struct.fix
+        if fix:
+            print 'mode', fix.mode
+            print 'gps time', fix.time
+            print 'latitude', fix.latitude
+            print 'longitude', fix.longitude
+
+            self.lat = fix.latitude
+            self.long = fix.longitude
+            if self.callback_location_updated:
+                self.callback_location_updated()
+        else:
+            print "no coords yet, trying again in 5 sec"
+            ecore.timer_add(5, self.check_gps)
+
     def start(self):
         # required to be initialized when using gpsd_control stuff
         gobject.threads_init()
@@ -97,6 +116,9 @@ class GpsManager(Singleton):
         if self.gpsd_control.struct().can_control:
             liblocation.gpsd_control_start(self.gpsd_control)
             self.stop_on_exit = True
+
+        self.gps = gps
+        ecore.timer_add(5, self.check_gps)
         print "gps started"
 
     def stop(self):
