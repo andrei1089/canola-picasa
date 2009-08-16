@@ -138,14 +138,18 @@ class GeneralRowRenderer(PluginThemeMixin, BaseRowRenderer):
                                                    cb_collapsed)
             #TODO: ? Delete_model in thread ?
             if self._model.delete_model():
-                #TODO: activate throbber - doesn't work now
                 self._model.parent.is_loading = True
                 self._model.parent.callback_state_changed(self._model.parent)
-
                 self._model.parent.children.remove(self._model)
+
+            if self._model.parent.callback_throbber_stop:
+                self._model.parent.callback_throbber_stop()
 
             self.delete_button.signal_emit("unblock,events", "")
             self.delete_button.state_set(ActionButton.STATE_TRASH)
+
+        if self._model.parent.callback_throbber_start:
+            self._model.parent.callback_throbber_start()
 
         self.delete_button.signal_callback_add("contents_box,collapsed", "",\
                                                cb_collapsed)
@@ -212,6 +216,8 @@ class ServiceController(BaseListController, OptionsControllerMixin):
         OptionsControllerMixin.__init__(self)
         self.model.callback_notify = self._show_notify
         self.model.callback_update_list = self._update_ui
+        self.model.callback_throbber_start = self.view.throbber_start
+        self.model.callback_throbber_stop = self.view.throbber_stop
 
     def _update_ui(self, model):
         self.view.model_updated()

@@ -444,6 +444,8 @@ class ServiceModelFolder(ModelFolder):
     def __init__(self, name, parent):
         ModelFolder.__init__(self, name, parent)
         self.callback_notify = None
+        self.callback_throbber_start = None
+        self.callback_throbber_stop = None
 
     def do_load(self):
         self.search()
