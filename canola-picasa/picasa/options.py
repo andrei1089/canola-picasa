@@ -774,6 +774,11 @@ class FullScreenImageInfoOptionsController(BasicPanel):
 
             text = text + "Location: %.5f, %.5f" % (lat, long) + "<br>"
 
+        if self.image_data.exif.make and self.image_data.exif.model:
+            camera = "Camera: %s %s<br>" % (self.image_data.exif.make.text, \
+                                                self.image_data.exif.model.text)
+            text = text + camera
+
         dim = "Dimensions: %sx%s px" % (
                 int(self.model.get_image_model().width),
                 int(self.model.get_image_model().height)
