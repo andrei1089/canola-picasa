@@ -23,6 +23,7 @@ import gdata.geo
 import gdata.service
 import os
 import thumbnailer
+import math
 import liblocation
 import gobject
 
@@ -64,8 +65,9 @@ class GpsManager(Singleton):
 
             self.lat = fix.latitude
             self.long = fix.longitude
-            if self.callback_location_updated:
-                self.callback_location_updated()
+            if not math.isnan(fix.latitude):
+                if self.callback_location_updated:
+                    self.callback_location_updated()
 
         print 'satellites_in_view', gps_struct.satellites_in_view
         print 'satellites_in_use', gps_struct.satellites_in_use
@@ -95,7 +97,7 @@ class GpsManager(Singleton):
                 self.callback_location_updated()
         else:
             print "no coords yet, trying again in 5 sec"
-            ecore.timer_add(5, self.check_gps)
+        ecore.timer_add(5, self.check_gps)
 
     def start(self):
         # required to be initialized when using gpsd_control stuff
