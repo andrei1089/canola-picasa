@@ -24,7 +24,6 @@ import gdata.service
 import os
 import thumbnailer
 import math
-import liblocation
 import gobject
 
 import ctypes as C
@@ -39,6 +38,13 @@ log = logging.getLogger("plugins.canola-picasa.manager")
 class GpsManager(Singleton):
     def __init__(self):
         Singleton.__init__(self)
+
+        self.gps_available = True
+        try:
+            import liblocation
+        except:
+            self.gps_available = False
+
         self.lat = None
         self.long = None
         self.callback_location_updated = None

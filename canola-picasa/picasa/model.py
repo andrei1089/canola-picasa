@@ -288,8 +288,15 @@ class GPSSearch(ModelFolder):
         ModelFolder.__init__(self, "Search by GPS location", parent)
 
     def do_load(self):
+        if not gps_manager.gps_available:
+            print "gps_not_available"
+            dialog = CanolaError("GPS coordinates available only on Internet Tablets. You have to enter coordinates manually")
+            self.show_notify(dialog)
+
         CommunityGPS("Search", self, None, True)
-        UpdateGPS("Update GPS location", self)
+
+        if gps_manager.gps_available:
+            UpdateGPS("Update GPS location", self)
         CommunityGPSManual("Manual GPS location", self, None, True)
 
 
