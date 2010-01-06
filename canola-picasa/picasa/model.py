@@ -288,9 +288,9 @@ class GPSSearch(ModelFolder):
         ModelFolder.__init__(self, "Search by GPS location", parent)
 
     def do_load(self):
-        CommunityGPSManual("Enter GPS location", self, None, True)
+        CommunityGPS("Search", self, None, True)
         UpdateGPS("Update GPS location", self)
-        CommunityGPS("Current GPS location", self, None, True)
+        CommunityGPSManual("Manual GPS location", self, None, True)
 
 
 class UpdateGPS(Model):
