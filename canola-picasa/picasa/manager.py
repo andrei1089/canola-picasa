@@ -47,6 +47,7 @@ class GpsManager(Singleton):
 
         self.lat = None
         self.long = None
+        self.radius = 10
         self.callback_location_updated = None
         self.stop_on_exit = False
 

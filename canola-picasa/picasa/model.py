@@ -298,7 +298,37 @@ class GPSSearch(ModelFolder):
         if gps_manager.gps_available:
             UpdateGPS("Update GPS location", self)
         CommunityGPSManual("Manual GPS location", self, None, True)
+        ShowGPS("Current search area", self)
+        SetRadiusGPS("Set size of search area", self)
 
+
+class ShowGPS(Model):
+    terra_type = "Model/Folder/Image/Picasa/GPSSearch/Show"
+    show_dialog = False
+
+    def show_dialog(self):
+        text = "Location not available"
+        if gps_manager.lat is not None and gps_manager.long is not None:
+            text = "Location: Lat %f, Long %f" % \
+                    ( gps_manager.lat, gps_manager.long)
+            text = text +  "<br>" + "Radius: %f" % gps_manager.radius
+
+        dialog = CanolaError(text)
+        self.parent.show_notify(dialog)
+
+class SetRadiusGPS(Model):
+    terra_type = "Model/Folder/Image/Picasa/GPSSearch/SetRadiusGPS"
+
+    def dialog_finished(self, parent, text):
+        if gps_valid_coord(text) and float(text) > 0:
+            gps_manager.radius = float(text)
+        else:
+            dialog = CanolaError("Invalid radius")
+            self.parent.show_notify(dialog)
+
+    def show_dialog(self):
+        dialog = EntryDialogModel("Set size of search area", "Enter radius(in km)", answer_callback=self.dialog_finished)
+        self.parent.show_notify(dialog)
 
 class UpdateGPS(Model):
     terra_type = "Model/Folder/Image/Picasa/GPSSearch/Update"
@@ -319,6 +349,7 @@ class UpdateGPS(Model):
         else:
             self.dialog_queue = dialog
         gps_manager.callback_location_updated = None
+        gps_manager.stop()
 
     def show_dialog(self):
         def unlock(ignored, text):
@@ -344,47 +375,26 @@ class CommunityGPSManual(AlbumServiceModelFolder):
     dialog_title = "GPS Coordonates"
     dialog1_msg = "Enter latitude:"
     dialog2_msg = "Enter longitude:"
-    dialog3_msg = "Enter radius:"
     dialog_error = "Invalid coordinates"
-    lat = None
-    long = None
-    radius = None
-
-    def do_search(self):
-        bbox =  "%f,%f,%f,%f" % self.rectangle
-        return picasa_manager.gd_client.GetFeed("/data/feed/api/all?max-results=50&bbox=%s" % bbox, limit='30')
 
     def show_dialog2(self, parent, text):
         self.lat = text
         dialog = EntryDialogModel(self.dialog_title, self.dialog2_msg,\
-                                    answer_callback=self.show_dialog3)
-        self.parent.show_notify(dialog)
-
-    def show_dialog3(self, parent, text):
-        self.long = text
-        dialog = EntryDialogModel(self.dialog_title, self.dialog3_msg,\
                                     answer_callback=self.show_dialog_finish)
         self.parent.show_notify(dialog)
 
     def show_dialog_finish(self, parent, text):
-        self.radius = text
+        self.long = text
 
         #check if input is valid
         if gps_valid_coord(self.lat, "lat") and \
-                    gps_valid_coord(self.long, "long") and\
-                    gps_valid_coord(self.radius) and \
-                    float(self.radius) > 0:
-            self.lat = float(self.lat)
-            self.long = float(self.long)
-            self.radius = float(self.radius)
+                gps_valid_coord(self.long, "long"):
+            gps_manager.lat = float(self.lat)
+            gps_manager.long = float(self.long)
         else:
             dialog = CanolaError(self.dialog_error)
             self.parent.show_notify(dialog)
             return
-
-        #compute search rectangle based on lat, long, radius
-        self.rectangle = gps_get_rectangle(self.lat, self.long, self.radius)
-        self.callback_finished()
 
     def show_dialog(self):
         dialog = EntryDialogModel(self.dialog_title, self.dialog1_msg, answer_callback=self.show_dialog2)
@@ -398,26 +408,14 @@ class CommunityGPS(AlbumServiceModelFolder):
         bbox =  "%f,%f,%f,%f" % self.rectangle
         return picasa_manager.gd_client.GetFeed("/data/feed/api/all?max-results=50&bbox=%s" % bbox, limit='30')
 
-    def show_dialog_finished(self, parent, text):
-        self.radius = text
-
-        if gps_valid_coord(self.radius) and float(self.radius) > 0:
-            self.radius = float(self.radius)
-            self.rectangle = gps_get_rectangle(gps_manager.lat,\
-                                    gps_manager.long, self.radius)
-            self.callback_finished()
-        else:
-            dialog = CanolaError("Invalid radius")
-            self.parent.show_notify(dialog)
-
-
     def show_dialog(self):
         if gps_manager.lat is None or gps_manager.long is None:
-            self.parent.show_notify(CanolaError("No GPS location. Click Update GPS location first"))
+            self.parent.show_notify(CanolaError("No GPS location. Update or enter location manually"))
         else:
-            dialog = EntryDialogModel("GPS Search", "Enter radius:",\
-                                  answer_callback = self.show_dialog_finished)
-            self.parent.show_notify(dialog)
+            self.radius = float(gps_manager.radius)
+            self.rectangle = gps_get_rectangle(gps_manager.lat,\
+                                    gps_manager.long, gps_manager.radius)
+            self.callback_finished()
 
 class CommunityFeatured(AlbumServiceModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album/Featured"
