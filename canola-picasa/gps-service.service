@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=org.maemo.canolapicasa.GPSService
+Exec=/usr/share/canola/plugins/canola-picasa/gps-service.py

@@ -1,4 +1,4 @@
-# Python wrapper to the Maemo 4.0 "Chinook" liblocation.  
+# Python wrapper to the Maemo 4.0 "Chinook" liblocation.
 # Wrapper version 0.1.
 #
 # Copyright 2008 by Robert W. Brewer < rwb123 at gmail dot com >
@@ -8,12 +8,12 @@
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This file is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Lesser General Public License for more details.
-# 
+#
 # Please see <http://www.gnu.org/licenses/> for a copy of the
 # GNU Lesser General Public License.
 
@@ -35,8 +35,8 @@ from types import MethodType
 ########################################
 
 
-(STATUS_NO_FIX, 
- STATUS_FIX,    
+(STATUS_NO_FIX,
+ STATUS_FIX,
  STATUS_DGPS_FIX) = range(3)
 
 (MODE_NOT_SEEN,
@@ -116,11 +116,11 @@ class CLocationGPSDevice(C.Structure):
     def sv_iter(self):
         if not self.Csatellites:
             return
-            
+
         gar = self.Csatellites.contents
-        sv_ptr_ptr = C.cast(gar.pdata, 
+        sv_ptr_ptr = C.cast(gar.pdata,
                             C.POINTER(C.POINTER(LocationGPSDeviceSatellite)))
-    
+
         for i in range(gar.len):
             yield sv_ptr_ptr[i].contents
 
@@ -167,7 +167,7 @@ class _PyGObject_Functions(C.Structure):
         ('newgobj',
          C.PYFUNCTYPE(C.py_object, C.c_void_p)),
         ]
-    
+
 class PyGObjectCPAI(object):
     def __init__(self):
         addr = C.pythonapi.PyCObject_AsVoidPtr(
@@ -203,7 +203,7 @@ def gps_device_get_type():
 def gps_device_get_new():
 
     def struct(self):
-        ptr = C.cast(C.c_void_p(hash(self)), 
+        ptr = C.cast(C.c_void_p(hash(self)),
                      C.POINTER(CLocationGPSDevice))
         return ptr.contents
 
@@ -220,7 +220,7 @@ def gps_device_get_new():
 
 def gps_device_reset_last_known(gpsdevice):
     libloc.location_gps_device_reset_last_known(C.c_void_p(hash(gpsdevice)))
-    
+
 def gps_device_start(gpsdevice):
     libloc.location_gps_device_start(C.c_void_p(hash(gpsdevice)))
 
@@ -228,12 +228,12 @@ def gps_device_stop(gpsdevice):
     libloc.location_gps_device_stop(C.c_void_p(hash(gpsdevice)))
 
 
-def gpsd_control_get_default():    
+def gpsd_control_get_default():
     def struct(self):
-        ptr = C.cast(C.c_void_p(hash(self)), 
+        ptr = C.cast(C.c_void_p(hash(self)),
                      C.POINTER(CLocationGPSDControl))
         return ptr.contents
-        
+
 
     gpsd_control_ptr = loc_gpsd_control()
 
@@ -278,7 +278,7 @@ loc_gpsd_control = libloc.location_gpsd_control_get_default
 loc_gpsd_control.restype = C.POINTER(CLocationGPSDControl)
 
 
-libloc.location_distance_between.argtypes = [C.c_double, 
+libloc.location_distance_between.argtypes = [C.c_double,
                                              C.c_double,
                                              C.c_double,
                                              C.c_double]
