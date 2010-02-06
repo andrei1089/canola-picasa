@@ -50,7 +50,6 @@ class GpsManager(Singleton):
         self.long = None
         self.radius = 10
         self.callback_location_updated = None
-        self.stop_on_exit = False
         self.remote_object = None
 
     def start(self):

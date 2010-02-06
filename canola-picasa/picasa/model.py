@@ -109,7 +109,6 @@ class MainModelFolder(ModelFolder, Task):
     def do_unload(self):
         ModelFolder.do_unload(self)
         picasa_manager.unload_thumbler()
-        gps_manager.stop()
 
 class UserPicturesModelFolder(ModelFolder, Task):
     terra_type = "Model/Folder/Task/Image/Picasa"
