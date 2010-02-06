@@ -301,6 +301,8 @@ class GPSSearch(ModelFolder):
         ShowGPS("Current search area", self)
         SetRadiusGPS("Set size of search area", self)
 
+    def do_unload(self):
+        gps_manager.stop()
 
 class ShowGPS(Model):
     terra_type = "Model/Folder/Image/Picasa/GPSSearch/Show"
@@ -340,8 +342,6 @@ class UpdateGPS(Model):
         self.locked = False
 
     def update_finished(self):
-        print gps_manager.lat
-        print gps_manager.long
         dialog = CanolaError("Location available. Lat: %s Long: %s" % \
                                  (str(gps_manager.lat), str(gps_manager.long)))
         if not self.locked:
@@ -349,7 +349,6 @@ class UpdateGPS(Model):
         else:
             self.dialog_queue = dialog
         gps_manager.callback_location_updated = None
-        gps_manager.stop()
 
     def show_dialog(self):
         def unlock(ignored, text):

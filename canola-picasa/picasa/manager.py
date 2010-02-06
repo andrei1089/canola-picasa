@@ -24,10 +24,13 @@ import gdata.service
 import os
 import thumbnailer
 import math
-import gobject
 
-import ctypes as C
-from types import MethodType
+import dbus
+try:
+    from e_dbus import DBusEcoreMainLoop
+    DBusEcoreMainLoop(set_as_default=True)
+except Exception:
+    import dbus.ecore
 
 from gdata.photos.service import GooglePhotosException
 from terra.core.singleton import Singleton
@@ -35,104 +38,46 @@ from terra.core.plugin_prefs import PluginPrefs
 
 log = logging.getLogger("plugins.canola-picasa.manager")
 
+#because there is no integration between Ecore and Glib loops we use
+#a different process to get data from GPS
 class GpsManager(Singleton):
     def __init__(self):
         Singleton.__init__(self)
-
+        #TODO: really check if GPS is available
         self.gps_available = True
-        try:
-            import liblocation
-        except:
-            self.gps_available = False
 
         self.lat = None
         self.long = None
         self.radius = 10
         self.callback_location_updated = None
         self.stop_on_exit = False
-
-    def notify_gps_update(self, gps_dev):
-        # Note: not all structure elements are used here,
-        # but they are all made available to python.
-        # Accessing the rest is left as an exercise.
-
-        # struct() gives access to the underlying ctypes data.
-        # ctypes magically converts things for us.
-        gps_struct = gps_dev.struct()
-        print 'online', gps_struct.online
-        print 'status', gps_struct.status
-
-        # Not sure if fix can ever be None, but check just in case.
-        fix = gps_struct.fix
-        if fix:
-            print 'mode', fix.mode
-            print 'gps time', fix.time
-            print 'latitude', fix.latitude
-            print 'longitude', fix.longitude
-
-            self.lat = fix.latitude
-            self.long = fix.longitude
-            if not math.isnan(fix.latitude):
-                if self.callback_location_updated:
-                    self.callback_location_updated()
-
-        print 'satellites_in_view', gps_struct.satellites_in_view
-        print 'satellites_in_use', gps_struct.satellites_in_use
-
-        # satellites is an iterator.
-        for sv in gps_struct.satellites:
-            print 'prn', sv.prn
-            print 'elevation', sv.elevation
-            print 'azimuth', sv.azimuth
-            print 'signal_strength', sv.signal_strength
-            print 'in_use', sv.in_use
-        print
-
-    def check_gps(self):
-        print "check gps coords"
-        gps_struct = self.gps.struct()
-        fix = gps_struct.fix
-        if fix:
-            print 'mode', fix.mode
-            print 'gps time', fix.time
-            print 'latitude', fix.latitude
-            print 'longitude', fix.longitude
-
-            self.lat = fix.latitude
-            self.long = fix.longitude
-            if self.callback_location_updated:
-                self.callback_location_updated()
-        else:
-            print "no coords yet, trying again in 5 sec"
-        ecore.timer_add(5, self.check_gps)
+        self.remote_object = None
 
     def start(self):
-        # required to be initialized when using gpsd_control stuff
-        gobject.threads_init()
+        log.info("Starting GPS Daemon")
+        bus = dbus.SessionBus()
 
-        # create a gps device object (which is a full pythonic gobject)
-        gps = liblocation.gps_device_get_new()
-
-        # connect its gobject 'changed' signal to our callback function
-        gps.connect('changed', self.notify_gps_update)
-
-        # create a gpsd_control object (which is a full pythonic gobject)
-        self.gpsd_control = liblocation.gpsd_control_get_default()
-
-        # are we the first one to grab gpsd?  If so, we can and must
-        # start it running.  If we didn't grab it first, then we cannot
-        # control it.
-        if self.gpsd_control.struct().can_control:
-            liblocation.gpsd_control_start(self.gpsd_control)
-            self.stop_on_exit = True
-
-        self.gps = gps
-        ecore.timer_add(5, self.check_gps)
-        print "gps started"
+        try:
+            self.remote_object = bus.get_object("org.maemo.canolapicasa.GPSService",
+                                           "/GPSObject")
+            self.remote_object.StartGPS(dbus_interface="org.maemo.canolapicasa.Interface")
+            self.remote_object.connect_to_signal("EmitNewCoords", self.update_coords, dbus_interface="org.maemo.canolapicasa.Interface")
+        except dbus.DBusException:
+            log.error("Error while trying to start GPS daemon")
 
     def stop(self):
-        if self.stop_on_exit and self.gpsd_control.struct().can_control:
-            liblocation.gpsd_control_stop(self.gpsd_control)
+        log.info("Stopping GPS Daemon")
+        try:
+            self.remote_object.StopGPS(dbus_interface="org.maemo.canolapicasa.Interface")
+        except dbus.DBusException, e:
+            log.error("Error while trying to stop GPS daemon: %s" % e)
+
+    def update_coords(self):
+        coords = self.remote_object.GetNewCoords(dbus_interface="org.maemo.canolapicasa.Interface")
+        self.lat, self.long = coords
+        log.info("New coords available: %f, %f" % (self.lat, self.long))
+        if self.callback_location_updated:
+            self.callback_location_updated()
 
 class PicasaManager(Singleton):
     def __init__(self):
