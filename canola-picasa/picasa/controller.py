@@ -688,7 +688,6 @@ class ImageInternalController(Controller):
 class ImageFullscreenController(Controller, OptionsControllerMixin):
     terra_type = "Controller/Media/Image"
     click_constant = 20
-    default_slideshow_time = 3.0
 
     def __init__(self, model, canvas, parent):
         if not isinstance(model, ModelFolder):
@@ -720,19 +719,27 @@ class ImageFullscreenController(Controller, OptionsControllerMixin):
         if self.is_model_folder:
             self._setup_model()
 
-        self.slideshow_loop = False
-        self.slideshow_random = False
+        prefs = PluginPrefs("slideshow")
+        self.slideshow_loop = prefs.get("loop", False)
+        self.slideshow_random = prefs.get("random", False)
         self.slideshow_random_idx = 0
         self.slideshow_random_list = []
         OptionsControllerMixin.__init__(self)
 
     def _load_slideshow_time(self):
-        canola_prefs = PluginPrefs("settings")
+        slideshow_prefs = PluginPrefs("slideshow")
+
         try:
-            time = int(canola_prefs["slideshow_time"])
+            self.default_slideshow_time = slideshow_prefs["default_time"]
         except KeyError:
-            time = canola_prefs["slideshow_time"] = self.default_slideshow_time
-            canola_prefs.save()
+            self.default_slideshow_time = slideshow_prefs["default_time"] = 3.0
+            slideshow_prefs.save()
+
+        try:
+            time = int(slideshow_prefs["time"])
+        except KeyError:
+            time = slideshow_prefs["time"] = self.default_slideshow_time
+            slideshow_prefs.save()
         return time
 
     def _setup_model(self):
@@ -1075,6 +1082,9 @@ class ImageFullscreenController(Controller, OptionsControllerMixin):
     def start_full_throbber(self, load_image, end_callback, *args):
         self.view.throbber_start()
         load_image(end_callback=end_callback, *args)
+    def randomize_slideshow_list(self):
+        self.slideshow_random_list = list(enumerate(self.model.children))
+        random.shuffle(self.slideshow_random_list)
 
     def image_preloaded(self):
         slideshow_active = self.is_slideshow_active()
@@ -1082,10 +1092,21 @@ class ImageFullscreenController(Controller, OptionsControllerMixin):
         self.view.show_image(slideshow_active)
         try:
             if self.slideshow_random:
-                prev = \
-                    self.slideshow_random_list[self.slideshow_random_idx - 1][1]
-                next = \
-                    self.slideshow_random_list[self.slideshow_random_idx + 1][1]
+                if len(self.slideshow_random_list) == 0:
+                    self.randomize_slideshow_list()
+
+                if self.slideshow_loop:
+                    prev_idx = (self.slideshow_random_idx - 1) % len(self.slideshow_random_list)
+                    next_idx = (self.slideshow_random_idx + 1) % len(self.slideshow_random_list)
+
+                    prev = self.slideshow_random_list[prev_idx][1]
+                    next = self.slideshow_random_list[next_idx][1]
+                else:
+                    prev = \
+                        self.slideshow_random_list[self.slideshow_random_idx - 1][1]
+                    next = \
+                        self.slideshow_random_list[self.slideshow_random_idx + 1][1]
+
             else:
                 prev = self.model.prev_get()
                 next = self.model.next_get()
