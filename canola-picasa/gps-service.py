@@ -21,6 +21,8 @@ import gobject
 import dbus
 import dbus.service
 import dbus.mainloop.glib
+
+gps_available = True
 try:
     import location
     maemo5 = True
@@ -28,7 +30,10 @@ except:
     maemo5 = False
 
 if not maemo5:
-    import liblocation
+    try:
+        import liblocation
+    except:
+        gps_available = False
 
 class GPSMaemo():
     lat = 0
@@ -82,7 +87,8 @@ class GPSMaemo5(GPSMaemo):
         if not device:
             return
         if device.fix:
-            if device.fix[1] & location.GPS_DEVICE_LATLONG_SET:
+            print device.fix
+            if device.fix[0] >= 2 and device.fix[1] & location.GPS_DEVICE_LATLONG_SET:
                 print "lat = %f, long = %f" % device.fix[4:6]
                 self.lat, self.long = device.fix[4:6]
                 if self.callback is not None:
@@ -98,8 +104,10 @@ class GPSObject(dbus.service.Object):
     GPS = None
 
     @dbus.service.method("org.maemo.canolapicasa.Interface",
-                         in_signature='', out_signature='')
+                         in_signature='', out_signature='b')
     def StartGPS(self):
+        if not gps_available:
+            return False
         if maemo5:
             self.GPS = GPSMaemo5()
         else:
@@ -107,6 +115,7 @@ class GPSObject(dbus.service.Object):
 
         self.GPS.set_callback(self.EmitNewCoords)
     	self.GPS.start_location()
+        return True
 
     @dbus.service.signal("org.maemo.canolapicasa.Interface")
     def EmitNewCoords(self):

@@ -44,7 +44,7 @@ class GpsManager(Singleton):
     def __init__(self):
         Singleton.__init__(self)
         #TODO: really check if GPS is available
-        self.gps_available = True
+        self.gps_available = False
 
         self.lat = None
         self.long = None
@@ -59,12 +59,16 @@ class GpsManager(Singleton):
         try:
             self.remote_object = bus.get_object("org.maemo.canolapicasa.GPSService",
                                            "/GPSObject")
-            self.remote_object.StartGPS(dbus_interface="org.maemo.canolapicasa.Interface")
+            self.gps_available = self.remote_object.StartGPS(dbus_interface="org.maemo.canolapicasa.Interface")
             self.remote_object.connect_to_signal("EmitNewCoords", self.update_coords, dbus_interface="org.maemo.canolapicasa.Interface")
         except dbus.DBusException:
             log.error("Error while trying to start GPS daemon")
+            self.gps_available = False
+        return self.gps_available
 
     def stop(self):
+        if not self.gps_available:
+            return
         log.info("Stopping GPS Daemon")
         try:
             self.remote_object.StopGPS(dbus_interface="org.maemo.canolapicasa.Interface")

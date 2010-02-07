@@ -287,8 +287,9 @@ class GPSSearch(ModelFolder):
         ModelFolder.__init__(self, "Search by GPS location", parent)
 
     def do_load(self):
+        gps_manager.start()
         if not gps_manager.gps_available:
-            print "gps_not_available"
+            log.info("GPS is not available")
             dialog = CanolaError("GPS coordinates available only on Internet Tablets. You have to enter coordinates manually")
             self.show_notify(dialog)
 
@@ -310,9 +311,9 @@ class ShowGPS(Model):
     def show_dialog(self):
         text = "Location not available"
         if gps_manager.lat is not None and gps_manager.long is not None:
-            text = "Location: Lat %f, Long %f" % \
+            text = "Location: Lat %.5f, Long %.5f" % \
                     ( gps_manager.lat, gps_manager.long)
-            text = text +  "<br>" + "Radius: %f" % gps_manager.radius
+            text = text +  "<br>" + "Radius: %.2f" % gps_manager.radius
 
         dialog = CanolaError(text)
         self.parent.show_notify(dialog)
@@ -341,8 +342,8 @@ class UpdateGPS(Model):
         self.locked = False
 
     def update_finished(self):
-        dialog = CanolaError("Location available. Lat: %s Long: %s" % \
-                                 (str(gps_manager.lat), str(gps_manager.long)))
+        dialog = CanolaError("Location available. Lat: %.5f Long: %.5f" % \
+                                 (gps_manager.lat, gps_manager.long))
         if not self.locked:
             self.parent.show_notify(dialog)
         else:
@@ -366,7 +367,6 @@ class UpdateGPS(Model):
         self.parent.show_notify(CanolaError("You will be notified when the location is available!",\
                                                         answer_callback=unlock))
         gps_manager.callback_location_updated = self.update_finished
-        gps_manager.start()
 
 class CommunityGPSManual(AlbumServiceModelFolder):
     terra_type = "Model/Folder/Image/Picasa/Service/Album/GPSManual"
