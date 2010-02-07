@@ -1,0 +1,4 @@
+#!/bin/sh
+rm -rf /usr/share/canola/plugins/canola-picasa
+/usr/bin/cnl-rescan-collections
+exit 0

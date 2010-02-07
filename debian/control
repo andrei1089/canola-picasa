@@ -1,0 +1,43 @@
+Package: canola2-picasa-plugin
+Version: 0.2.0-maemo4
+Section: user/multimedia
+Priority: optional
+Architecture: all
+Depends: canola2 (>= 2.0.0~beta11), python-gdata, python-gobject
+Maintainer: Andrei Mirestean <andrei.mirestean@gmail.com>
+Description: Access your albums from Picasa, upload new albums and search for pictures based on name, tags and current GPS location
+XB-Maemo-Icon-26:
+ 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
+ f/vgX2ZaOKaEY/xIAAAAAElFTkSuQmCC
