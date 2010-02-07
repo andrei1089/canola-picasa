@@ -276,7 +276,6 @@ class CommunitySearchTag(AlbumServiceModelFolder):
     show_dialog = True
 
     def do_search(self):
-        print "community do_search"
         return picasa_manager.gd_client.SearchCommunityPhotos( \
                                             self.dialog_response, limit='30')
 

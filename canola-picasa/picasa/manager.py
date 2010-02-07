@@ -327,8 +327,8 @@ class PicasaManager(Singleton):
 
 if __name__ == "__main__":
     p=PicasaManager()
-    p.user = 'canolapicasa'
-    p.password = '1234abcd'
+    p.user = 'xxxxxxx'
+    p.password = 'xxxxxxx'
     p.login()
     print p.is_logged()
 
