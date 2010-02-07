@@ -71,7 +71,8 @@ class GpsManager(Singleton):
             return
         log.info("Stopping GPS Daemon")
         try:
-            self.remote_object.StopGPS(dbus_interface="org.maemo.canolapicasa.Interface")
+            if self.remote_object:
+                self.remote_object.StopGPS(dbus_interface="org.maemo.canolapicasa.Interface")
         except dbus.DBusException, e:
             log.error("Error while trying to stop GPS daemon: %s" % e)
 
