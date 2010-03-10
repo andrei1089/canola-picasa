@@ -18,6 +18,7 @@ import os
 import edje
 import ecore
 import logging
+import shutil
 import urllib
 
 import thumbnailer
@@ -172,7 +173,7 @@ class AlbumServiceModelFolder(ModelFolder):
 
         def thumbler_finished_cb(path, thumb_path, w, h):
             del picasa_manager.thumbs_in_progress[path]
-            os.rename(thumb_path, path)
+            shutil.move(thumb_path, path)
             if end_callback:
                 end_callback(self)
 

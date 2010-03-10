@@ -18,6 +18,7 @@ import evas
 import ecore
 import locale
 import logging
+import shutil
 import os
 import random
 
@@ -345,7 +346,7 @@ class AlbumGridController(Controller, OptionsControllerMixin):
     def _cb_create_thumb(self, model, callback):
 
         def thumbler_finished_cb(path, thumb_path, w, h):
-            os.rename(thumb_path, path)
+            shutil.move(thumb_path, path)
             model.thumb_path = path
             #TODO: find a way to use the callback instead of force_redraw
             self.force_view_redraw()
