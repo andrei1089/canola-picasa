@@ -1,0 +1,95 @@
+#!/usr/bin/make -f
+
+DEB_DESTDIR=$(CURDIR)/debian/tmp
+
+# Python definitions
+PYTHON=python2.5
+
+# Directories used by this plugin
+CNL_SHARE_DIR=/usr/share/canola
+GPS_DIR=/usr/share/picasa-gps
+CNL_THEMES_DIR=$(CNL_SHARE_DIR)/themes
+CNL_PLUGINS_DIR=$(CNL_SHARE_DIR)/plugins
+
+# Other plugin definitions:
+CNL_COLLECTION_NAME=canola-picasa
+CNL_THEMES_SUFFIX=picasa
+
+build: build-stamp
+build-stamp:
+	dh_testdir
+	#
+	# Compile themes
+	#
+	for THEME_DIR in $(CURDIR)/data/themes/*; do \
+		THEME=`basename $$THEME_DIR`; \
+		cd $$THEME_DIR && \
+	        edje_cc $$THEME.edc $$THEME-$(CNL_THEMES_SUFFIX).edj; \
+    done
+	#
+	# Compile sources
+	#
+	$(PYTHON) -OO -m compileall -d $(CNL_COLLECTION_NAME) $(CURDIR)/$(CNL_COLLECTION_NAME)
+	#
+	# Build plugin package
+	#
+	cd $(CURDIR) && \
+		zip -q -0 $(CNL_COLLECTION_NAME).zip $(CNL_COLLECTION_NAME)/plugins.info `find $(CNL_COLLECTION_NAME) -name "*.pyo"`
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	#
+	# Remove built themes
+	#
+	find $(CURDIR)/data/themes/ -name "*.edj" | xargs rm -f
+	#
+	# Remove built sources
+	#
+	find $(CURDIR)/$(CNL_COLLECTION_NAME) -name "*.pyc" | xargs rm -f
+	find $(CURDIR)/$(CNL_COLLECTION_NAME) -name "*.pyo" | xargs rm -f
+	#
+	# Remove plugin package
+	#
+	rm -f $(CURDIR)/$(CNL_COLLECTION_NAME).zip
+	rm -f build-stamp
+	rm -rf $(DEB_DESTDIR)
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_installdirs
+	#
+	# Install themes
+	#
+	for THEME in $(CURDIR)/data/themes/*/*.edj; do \
+		install -D -m 644 $$THEME $(DEB_DESTDIR)/$(CNL_THEMES_DIR)/`basename $$THEME`; \
+	done
+
+	mkdir -p $(DEB_DESTDIR)/$(GPS_DIR)
+	cp $(CURDIR)/service/* $(DEB_DESTDIR)/$(GPS_DIR)
+	#
+	# Install plugin package
+	#
+	install -D -m 644 $(CURDIR)/$(CNL_COLLECTION_NAME).zip $(DEB_DESTDIR)/$(CNL_PLUGINS_DIR)/$(CNL_COLLECTION_NAME).zip
+	dh_install --sourcedir=$(DEB_DESTDIR) --fail-missing
+
+binary: build install
+	dh_testdir
+	dh_testroot
+	dh_installdocs
+	dh_installdebconf
+	dh_installchangelogs
+	dh_strip
+	dh_compress
+	dh_fixperms
+	dh_makeshlibs
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+.PHONY: build clean install binary

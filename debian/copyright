@@ -1,0 +1,22 @@
+This package was debianized by Andrei Mirestean (andrei1089) <andrei.mirestean@gmail.com>
+on Sat, 13 Mar 2010 23:16:09 +0200
+
+Upstream Authors: Canola developers <canola-devel@garage.maemo.org>
+
+License:
+
+Copyright (C) 2007-2009 Instituto Nokia de Tecnologia and contributors
+listed in the file 'AUTHORS'
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.

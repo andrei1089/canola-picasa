@@ -1,43 +1,77 @@
-Package: canola2-picasa-plugin
-Version: 0.2.0-maemo4
+Source: canola-picasa-plugin
+Priority: optional
 Section: user/multimedia
+Maintainer: Andrei Mirestean <andrei.mirestean@gmail.com>
+Build-Depends: debhelper, python-dev, edje0-bin | libedje-bin, zip
+Standards-Version: 3.6.1
+XB-Maemo-Display-Name: Canola2 Picasa Plugin
+XB-Maemo-Icon-26:
+  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
+Format: 3.0 (native)
+
+Package: canola2-picasa-plugin
+Provides: canola-picasa-plugin, canola-picasa, canola2-picasa
 Priority: optional
 Architecture: all
-Depends: canola2 (>= 2.0.0~beta11), python-gdata, python-gobject
-Maintainer: Andrei Mirestean <andrei.mirestean@gmail.com>
-Description: Access your albums from Picasa, upload new albums and search for pictures based on name, tags and current GPS location
-XB-Maemo-Icon-26:
- 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
- f/vgX2ZaOKaEY/xIAAAAAElFTkSuQmCC
+Depends: canola2 (>= 2.0.0~rc5), python-gdata, python-gobject
+Description: Picasa plugin for Canola2.
+ .
+ This is the Picasa plugin for Canola. It is able to access the web albums stored at Picasa, to upload new pictures, to add/update descriptions and tags). The plugin will ease and shorten your process of taking and sharing a picture on the Internet. Also it can search for community pictures taken near the current GPS position.

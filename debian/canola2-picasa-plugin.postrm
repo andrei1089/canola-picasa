@@ -1,0 +1,4 @@
+#!/bin/sh
+
+/usr/bin/cnl-rescan-collections
+exit 0
