@@ -71,8 +71,13 @@ class GPSMaemo4(GPSMaemo):
         gps_struct = gps_dev.struct()
         fix = gps_struct.fix
         if fix:
-            self.lat = fix.latitude
-            self.long = fix.longitude
+            print fix.mode
+            if fix.mode >= 2:
+                self.lat = fix.latitude
+                self.long = fix.longitude
+                print "lat = %f, long = %f" % (self.lat, self.long)
+                if self.callback is not None:
+                    self.callback()
 
 class GPSMaemo5(GPSMaemo):
     def __init__(self):
