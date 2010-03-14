@@ -303,7 +303,7 @@ class GPSSearch(ModelFolder):
 
     def do_unload(self):
         gps_manager.stop()
-        ModelFolder.do_unload()
+        ModelFolder.do_unload(self)
 
 class ShowGPS(Model):
     terra_type = "Model/Folder/Image/Picasa/GPSSearch/Show"
