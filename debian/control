@@ -71,7 +71,7 @@ Package: canola2-picasa-plugin
 Provides: canola-picasa-plugin, canola-picasa, canola2-picasa
 Priority: optional
 Architecture: all
-Depends: canola2 (>= 2.0.0~rc5), python-gdata, python-gobject
+Depends: canola2 (>= 2.0.0~rc5), python-gdata, python-gobject | python2.5-gobject
 Description: Picasa plugin for Canola2.
  .
  This is the Picasa plugin for Canola. It is able to access the web albums stored at Picasa, to upload new pictures, to add/update descriptions and tags). The plugin will ease and shorten your process of taking and sharing a picture on the Internet. Also it can search for community pictures taken near the current GPS position.
