@@ -34,7 +34,6 @@ if not maemo5:
         import liblocation
     except:
         gps_available = False
-
 class GPSMaemo():
     lat = 0
     long = 0
@@ -59,11 +58,13 @@ class GPSMaemo4(GPSMaemo):
         # are we the first one to grab gpsd?  If so, we can and must
         # start it running.  If we didn't grab it first, then we cannot
         # control it.
-        if gpsd_control.struct().can_control:
+	print "start_location"
+        if self.gpsd_control.struct().can_control:
             liblocation.gpsd_control_start(self.gpsd_control)
             self.stop_on_exit = True
 
     def stop_location(self):
+	print "stop_location"
         if self.stop_on_exit:
             liblocation.gpsd_control_stop(self.gpsd_control)
 
@@ -111,15 +112,19 @@ class GPSObject(dbus.service.Object):
     @dbus.service.method("org.maemo.canolapicasa.Interface",
                          in_signature='', out_signature='b')
     def StartGPS(self):
+	print "Starting GPS"
         if not gps_available:
             return False
         if maemo5:
             self.GPS = GPSMaemo5()
+	    print "Running on Maemo5"
         else:
+	    print "Running on Maemo4"
             self.GPS = GPSMaemo4()
 
         self.GPS.set_callback(self.EmitNewCoords)
     	self.GPS.start_location()
+	print "return"
         return True
 
     @dbus.service.signal("org.maemo.canolapicasa.Interface")
