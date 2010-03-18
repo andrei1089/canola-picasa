@@ -2,7 +2,7 @@ Source: canola-picasa-plugin
 Priority: optional
 Section: user/multimedia
 Maintainer: Andrei Mirestean <andrei.mirestean@gmail.com>
-Build-Depends: debhelper, python-dev, edje0-bin | libedje-bin, zip
+Build-Depends: debhelper, python-dev | python2.5-dev, edje0-bin | libedje-bin, zip
 Standards-Version: 3.6.1
 XB-Maemo-Display-Name: Canola2 Picasa Plugin
 XB-Maemo-Icon-26:
