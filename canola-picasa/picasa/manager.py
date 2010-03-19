@@ -61,8 +61,8 @@ class GpsManager(Singleton):
                                            "/GPSObject")
             self.gps_available = self.remote_object.StartGPS(dbus_interface="org.maemo.canolapicasa.Interface")
             self.remote_object.connect_to_signal("EmitNewCoords", self.update_coords, dbus_interface="org.maemo.canolapicasa.Interface")
-        except dbus.DBusException:
-            log.error("Error while trying to start GPS daemon")
+        except dbus.DBusException, e:
+            log.error("Error while trying to start GPS daemon, %s" % e)
             self.gps_available = False
         return self.gps_available
 
