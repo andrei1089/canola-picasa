@@ -8,6 +8,9 @@ PYTHON=python2.5
 # Directories used by this plugin
 CNL_SHARE_DIR=/usr/share/canola
 GPS_DIR=/usr/share/picasa-gps
+DBUS_DIR=/usr/share/dbus-1/services
+DBUS_SERVICE_NAME="org.maemo.canolapicasa.GPSService.service"
+
 CNL_THEMES_DIR=$(CNL_SHARE_DIR)/themes
 CNL_PLUGINS_DIR=$(CNL_SHARE_DIR)/plugins
 
@@ -69,7 +72,10 @@ install: build
 	done
 
 	mkdir -p $(DEB_DESTDIR)/$(GPS_DIR)
-	cp $(CURDIR)/service/* $(DEB_DESTDIR)/$(GPS_DIR)
+	cp $(CURDIR)/service/*.py $(DEB_DESTDIR)/$(GPS_DIR)
+
+	mkdir -p $(DEB_DESTDIR)/$(DBUS_DIR)
+	cp $(CURDIR)/service/gps-service.service $(DEB_DESTDIR)/$(DBUS_DIR)/$(DBUS_SERVICE_NAME)
 	#
 	# Install plugin package
 	#

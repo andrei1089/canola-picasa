@@ -1,3 +1,4 @@
 usr/share/canola/themes/*.edj
 usr/share/canola/plugins/*.zip
 usr/share/picasa-gps/*
+usr/share/dbus-1/services/org.maemo.canolapicasa.GPSService.service
