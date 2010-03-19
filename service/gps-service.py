@@ -34,6 +34,7 @@ if not maemo5:
         import liblocation
     except:
         gps_available = False
+
 class GPSMaemo():
     lat = 0
     long = 0
@@ -47,6 +48,7 @@ class GPSMaemo():
 
 class GPSMaemo4(GPSMaemo):
     def __init__(self):
+        print "GPS Maemo4 init"
         gps = liblocation.gps_device_get_new()
         gps.connect('changed', self.on_changed)
 
@@ -58,17 +60,18 @@ class GPSMaemo4(GPSMaemo):
         # are we the first one to grab gpsd?  If so, we can and must
         # start it running.  If we didn't grab it first, then we cannot
         # control it.
-	print "start_location"
+        print "GPS Maemo4 start_location"
         if self.gpsd_control.struct().can_control:
             liblocation.gpsd_control_start(self.gpsd_control)
             self.stop_on_exit = True
 
     def stop_location(self):
-	print "stop_location"
+        print "GPS Maemo 4 stop_location"
         if self.stop_on_exit:
             liblocation.gpsd_control_stop(self.gpsd_control)
 
     def on_changed(self, gps_dev):
+        print "GPS Maemo 4 on_changed"
         gps_struct = gps_dev.struct()
         fix = gps_struct.fix
         if fix:
@@ -82,6 +85,7 @@ class GPSMaemo4(GPSMaemo):
 
 class GPSMaemo5(GPSMaemo):
     def __init__(self):
+        print "GPS Maemo5 init"
         self.control = location.GPSDControl.get_default()
         self.device = location.GPSDevice()
         self.control.set_properties(preferred_method=location.METHOD_USER_SELECTED,
@@ -90,6 +94,7 @@ class GPSMaemo5(GPSMaemo):
         self.device.connect("changed", self.on_changed, self.control)
 
     def on_changed(self, device, data):
+        print "GPS Maemo 5 on_changed"
         if not device:
             return
         if device.fix:
@@ -101,9 +106,11 @@ class GPSMaemo5(GPSMaemo):
                     self.callback()
 
     def start_location(self):
+        print "GPS Maemo5 start_location"
         self.control.start()
 
     def stop_location(self):
+        print "GPS Maemo 5 stop_location"
         self.control.stop()
 
 class GPSObject(dbus.service.Object):
@@ -112,19 +119,19 @@ class GPSObject(dbus.service.Object):
     @dbus.service.method("org.maemo.canolapicasa.Interface",
                          in_signature='', out_signature='b')
     def StartGPS(self):
-	print "Starting GPS"
+        print "Start GPS"
         if not gps_available:
             return False
         if maemo5:
             self.GPS = GPSMaemo5()
-	    print "Running on Maemo5"
+            print "Running on Maemo5"
         else:
-	    print "Running on Maemo4"
+            print "Running on Maemo4"
             self.GPS = GPSMaemo4()
 
         self.GPS.set_callback(self.EmitNewCoords)
     	self.GPS.start_location()
-	print "return"
+        print "Start GPS return"
         return True
 
     @dbus.service.signal("org.maemo.canolapicasa.Interface")
@@ -139,15 +146,22 @@ class GPSObject(dbus.service.Object):
     @dbus.service.method("org.maemo.canolapicasa.Interface",
                          in_signature='', out_signature='')
     def StopGPS(self):
-	self.GPS.stop_location()
+        print "Stop GPS"
+        self.GPS.stop_location()
         mainloop.quit()
 
 if __name__ == '__main__':
+    gobject.threads_init()
+    print "GPS Service running"
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
     session_bus = dbus.SessionBus()
     name = dbus.service.BusName("org.maemo.canolapicasa.GPSService", session_bus)
     object = GPSObject(session_bus, '/GPSObject')
+    if maemo5:
+        print "Running on Maemo5"
+    else:
+        print "Running on Maemo4"
 
     mainloop = gobject.MainLoop()
     mainloop.run()
