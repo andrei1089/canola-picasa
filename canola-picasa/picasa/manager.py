@@ -192,6 +192,9 @@ class PicasaManager(Singleton):
     def get_community_albums(self, user):
         return self.gd_client.GetUserFeed(user=user)
 
+    def get_favorites(self):
+        return self.gd_client.GetFeed("/data/feed/api/user/%s/contacts?kind=user" % self.user)
+
     def refresh_user_albums(self, user):
         self.albums = self.gd_client.GetUserFeed(user=user)
 

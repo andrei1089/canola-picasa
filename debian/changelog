@@ -1,3 +1,9 @@
+canola-picasa-plugin (0.2.1+gitbaac2b54690bubuntu1) unstable; urgency=low
+
+  * Added option to view Favorites
+
+ -- Andrei Mirestean <andrei.mirestean@gmail.com>  Fri, 19 Mar 2010 02:59:46 +0200
+
 canola-picasa-plugin (0.2.0+gitbaac2b54690b) unstable; urgency=low
 
   * Initial release

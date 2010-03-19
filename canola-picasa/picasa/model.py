@@ -93,6 +93,7 @@ class MainModelFolder(ModelFolder, Task):
             if self.login_successful:
                 UserPicturesModelFolder("My pictures", self)
 
+            FavoritesModelFolder("My favorites", self)
             CommunityAlbumModelFolder("Search albums by user", self)
             CommunitySearchTag("Search by tag", self, None, True)
             CommunityFeatured("Featured pictures", self, None, True)
@@ -118,6 +119,39 @@ class UserPicturesModelFolder(ModelFolder, Task):
     def do_load(self):
         UserAlbumModelFolder("My albums", self)
         UserAllPicturesModel("All pictures slideshow", self, None, True)
+
+class FavoritesModelFolder(ModelFolder):
+    terra_type = "Model/Folder/Picasa/Favorites"
+
+
+    def search(self, end_callback=None):
+        del self.children[:]
+
+        def refresh():
+            return picasa_manager.get_favorites()
+
+        def refresh_finished(exception, retval):
+            if not self.is_loading:
+                log.info("model is not loading")
+                return
+
+            if exception is not None:
+                msg = "ERROR!<br>" + str(exception[1])
+                log.error(exception)
+
+                if self.callback_notify:
+                    self.callback_notify(CanolaError(msg))
+
+            for entry in retval.entry:
+                name = entry.user.text
+                FavoriteAlbumModelFolder(name, self, name)
+            self.inform_loaded()
+
+        self.is_loading = True
+        ThreadedFunction(refresh_finished, refresh).start()
+
+    def do_load(self):
+        self.search()
 
 class ImageModel(Model):
     terra_type = "Model/Media/Image/Picasa"
@@ -506,7 +540,7 @@ class ServiceModelFolder(ModelFolder):
         prop["cntPhotos"] = album.numphotos.text
 
         if self.community:
-            prop["album_user"] = self.dialog_response
+            prop["album_user"] = self.user
             CommunityAlbumModel(album.title.text, self, prop, self.community)
         else:
             UserAlbumModel(album.title.text, self, prop)
@@ -537,6 +571,20 @@ class UserAlbumModelFolder(ServiceModelFolder):
         return False
 
 
+class FavoriteAlbumModelFolder(ServiceModelFolder):
+    terra_type = "Model/Folder/Task/Image/Picasa/Service/FavoriteAlbumModel"
+
+    def __init__(self, name, parent, favorite_user):
+        ServiceModelFolder.__init__(self, name, parent)
+        self.dialog_response = None
+        self.community = True
+        self.user = favorite_user
+
+    def do_search(self):
+        self.albums = picasa_manager.get_community_albums(self.user)
+        self.parse_entry_list(self.albums)
+
+
 class CommunityAlbumModelFolder(ServiceModelFolder):
     terra_type = "Model/Folder/Task/Image/Picasa/Service/CommunityAlbumModel"
     dialog_title = "Community albums"
@@ -550,6 +598,7 @@ class CommunityAlbumModelFolder(ServiceModelFolder):
 
     def do_search(self):
         if self.dialog_response is not None:
+            self.user = self.dialog_response
             self.albums = picasa_manager.get_community_albums(self.dialog_response)
             self.parse_entry_list(self.albums)
 
