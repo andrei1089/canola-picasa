@@ -92,8 +92,8 @@ class MainModelFolder(ModelFolder, Task):
 
             if self.login_successful:
                 UserPicturesModelFolder("My pictures", self)
+                FavoritesModelFolder("My favorites", self)
 
-            FavoritesModelFolder("My favorites", self)
             CommunityAlbumModelFolder("Search albums by user", self)
             CommunitySearchTag("Search by tag", self, None, True)
             CommunityFeatured("Featured pictures", self, None, True)
