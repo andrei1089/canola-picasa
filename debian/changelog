@@ -1,4 +1,10 @@
-canola-picasa-plugin (0.2.1+gitbaac2b54690bubuntu1) unstable; urgency=low
+canola-picasa-plugin (0.2.2+git9c7c0ff56b10) unstable; urgency=low
+
+  * Fix Favorites bug, show only when logged in
+
+ -- Andrei Mirestean <andrei.mirestean@gmail.com>  Sat, 20 Mar 2010 14:44:59 +0200
+
+canola-picasa-plugin (0.2.1+gitbaac2b54690b) unstable; urgency=low
 
   * Added option to view Favorites
 
