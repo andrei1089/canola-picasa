@@ -20,7 +20,6 @@ import ecore
 import struct
 import select
 import logging
-import epsilon
 from signal import SIGKILL
 
 STRFMT = "liiii1024s"

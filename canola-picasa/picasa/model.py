@@ -22,7 +22,6 @@ import shutil
 import urllib
 
 import thumbnailer
-import epsilon
 
 from time import time
 
@@ -648,7 +647,7 @@ class UserPassOptionsModel(MixedListItemDual):
         self.callback_use(self)
 
 
-ItemRenderer = manager.get_class("Renderer/EtkList/Item")
+ItemRenderer = manager.get_class("Renderer/ElmList/Item")
 class MixedListItem(ModelFolder):
     terra_type = "Model/Settings/Folder/MixedList/Item"
     title = ""
@@ -1101,7 +1100,6 @@ class FullScreenAddCommentOptions(Model):
         album_model = self.parent.screen_controller.model
         image_model = album_model.children[album_model.current]
         return picasa_manager.add_comment(image_model.image, comment)
-
 
 class FullScreenOptions(OptionsModelFolder):
     def get_image_model(self):

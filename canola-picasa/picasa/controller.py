@@ -22,7 +22,7 @@ import shutil
 import os
 import random
 
-import epsilon
+#import epsilon
 import thumbnailer
 
 from manager import PicasaManager
@@ -259,7 +259,8 @@ class MainController(BaseListController):
                 dialog = EntryDialogModel(model.dialog_title, model.dialog_msg,\
                                                     answer_callback=do_search)
                 self.parent.show_notify(dialog)
-        except:
+        except Exception, e:
+	    print e
             BaseListController.cb_on_clicked(self, view, index)
 
 class GPSSearchController(BaseListController):
