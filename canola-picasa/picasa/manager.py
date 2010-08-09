@@ -22,7 +22,6 @@ import gdata.media
 import gdata.geo
 import gdata.service
 import os
-import thumbnailer
 import math
 
 import dbus
@@ -107,18 +106,6 @@ class PicasaManager(Singleton):
         except:
             print "running outside canola"
             self.outside_terra = True;
-
-    def load_thumbler(self):
-        try:
-            self.thumbler = thumbnailer.CanolaThumbnailer()
-        except RuntimeError, e:
-            log.error(e)
-            self.thumbler = None
-
-    def unload_thumbler(self):
-        if self.thumbler:
-            self.thumbler.stop()
-        self.thumbler = None
 
     def reload_prefs(self):
         self.user = self.get_preference("username", "")

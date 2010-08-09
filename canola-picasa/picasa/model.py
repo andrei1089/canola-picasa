@@ -14,14 +14,13 @@
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import ethumb
 import os
 import edje
 import ecore
 import logging
 import shutil
 import urllib
-
-import thumbnailer
 
 from time import time
 
@@ -67,7 +66,6 @@ class MainModelFolder(ModelFolder, Task):
         self.callback_notify = None
 
     def do_load(self):
-        picasa_manager.load_thumbler()
         self.threaded_load()
 
     def threaded_load(self, end_callback=None):
@@ -109,7 +107,6 @@ class MainModelFolder(ModelFolder, Task):
 
     def do_unload(self):
         ModelFolder.do_unload(self)
-        picasa_manager.unload_thumbler()
 
 class UserPicturesModelFolder(ModelFolder, Task):
     terra_type = "Model/Folder/Task/Image/Picasa"
@@ -195,10 +192,19 @@ class AlbumServiceModelFolder(ModelFolder):
         self.callback_update_list = None
         self.size = 0
         self.community = community
+	self.thumbler = mger.thumbnailer
 
         ModelFolder.__init__(self, name, parent)
 
-        self.thumbler = picasa_manager.thumbler
+    def _setup_thumb_options(self):
+        (size, w, h, aspect, frame) = _parse_thumb_options(self.view)
+        if (w, h) == (-1, -1):
+            w, h = 120, 90
+        if aspect == -1:
+            aspect = ethumb.ETHUMB_THUMB_CROP
+
+        self._thumb_options = (size, w, h, aspect, frame)
+
 
     def request_thumbnail(self, end_callback=None):
         def request(*ignored):
@@ -212,9 +218,11 @@ class AlbumServiceModelFolder(ModelFolder):
 
         def request_finished(exception, retval):
             self.thumbler.request_add(path,
-                                           epsilon.EPSILON_THUMB_CROP,
-                                           epsilon.EPSILON_THUMB_CROP,
-                                           120, 90,
+					self._thumb_options[0],
+					self._thumb_options[3],
+					self._thumb_options[1],
+					self._thumb_options[2],
+					self._thumb_options[4],
                                            thumbler_finished_cb)
 
         url = self.prop["thumb_url"]

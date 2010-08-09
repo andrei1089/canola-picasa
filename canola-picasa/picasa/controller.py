@@ -13,6 +13,8 @@
 #
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import ethumb
 import math
 import evas
 import ecore
@@ -21,9 +23,6 @@ import logging
 import shutil
 import os
 import random
-
-#import epsilon
-import thumbnailer
 
 from manager import PicasaManager
 
@@ -64,6 +63,35 @@ CanolaError = manager.get_class("Model/Notify/Error")
 
 log = logging.getLogger("plugins.canola-picasa.controller")
 picasa_manager = PicasaManager()
+
+def _parse_thumb_options(view):
+    str_size = view.data_get("thumb_size")
+    str_w = view.data_get("thumb_w")
+    str_h = view.data_get("thumb_h")
+    str_aspect = view.data_get("thumb_aspect")
+
+    try:
+        size = int(str_size)
+    except (ValueError, TypeError):
+        size = -1
+
+    try:
+        w = int(str_w)
+        h = int(str_h)
+    except (ValueError, TypeError):
+        w, h = (-1, -1)
+
+    try:
+        a = int(str_aspect)
+    except (ValueError, TypeError):
+        a = -1
+
+    frame = view.data_get("thumb_frame")
+    if frame:
+        frame = frame.split(":")
+        frame.insert(0, view.file_get()[0])
+
+    return (size, w, h, a, frame)
 
 class ActionButton(PluginThemeMixin, GeneralActionButton):
     plugin = "picasa"
@@ -311,21 +339,31 @@ class AlbumGridController(Controller, OptionsControllerMixin):
 
         self._setup_view()
         self.model.updated = False
+        self._check_model_loaded()
+
+	self.thumbler = mger.thumbnailer
+        self._setup_thumb_options()
 
         self.thumb_request_list = []
 
         # should be after setup UI
         self.model.changed_callback_add(self._update_ui)
 
-        self._check_model_loaded()
         OptionsControllerMixin.__init__(self)
-
-        self.thumbler = picasa_manager.thumbler
 
     def do_resume(self):
         if self.model.updated:
             self.model.updated = False
             self.view.force_redraw()
+
+    def _setup_thumb_options(self):
+        (size, w, h, aspect, frame) = _parse_thumb_options(self.view)
+        if (w, h) == (-1, -1):
+            w, h = 128, 128
+        if aspect == -1:
+            aspect = ethumb.ETHUMB_THUMB_CROP
+
+        self._thumb_options = (size, w, h, aspect, frame)
 
     def _check_model_loaded(self):
         if self.model.is_loaded:
@@ -355,9 +393,11 @@ class AlbumGridController(Controller, OptionsControllerMixin):
 
         def down_finished_cb():
             self.thumbler.request_add(model.thumb_save_path,
-                                           epsilon.EPSILON_THUMB_NORMAL,
-                                           epsilon.EPSILON_THUMB_CROP,
-                                           128, 128,
+					   self._thumb_options[0],
+                                           self._thumb_options[3],
+                                           self._thumb_options[1],
+                                           self._thumb_options[2],
+                                           self._thumb_options[4],
                                            thumbler_finished_cb)
 
         def file_exists_cb():
@@ -1211,7 +1251,6 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
 
         OptionsControllerMixin.__init__(self)
 
-
     def reinit(self):
         self.threshold_w = 0
         self.row_limit_intervals = []
@@ -1226,7 +1265,6 @@ class AlbumThumbController(Controller, OptionsControllerMixin):
 
         self.max_left_row = 0
         self.min_right_row = 0
-
 
     def _setup_view(self):
         self.view = ImageThumbScreen(self.evas, self.parent.view,
